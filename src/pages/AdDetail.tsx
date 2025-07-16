@@ -26,13 +26,18 @@ export const AdDetail = () => {
   const [isFavorite, setIsFavorite] = useState(false);
   const [comments, setComments] = useState<any[]>([]);
   const [newComment, setNewComment] = useState('');
+  const [userRating, setUserRating] = useState(0);
+  const [averageRating, setAverageRating] = useState(0);
+  const [totalRatings, setTotalRatings] = useState(0);
 
   useEffect(() => {
     if (id) {
       fetchAd();
       fetchComments();
+      fetchRatings();
       if (user) {
         checkFavorite();
+        fetchUserRating();
       }
     }
   }, [id, user]);
@@ -143,6 +148,73 @@ export const AdDetail = () => {
       toast({
         title: t('Khalad', 'Error'),
         description: t('Khalad ayaa dhacay', 'Failed to send message'),
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const fetchRatings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select('rating')
+        .eq('ad_id', id);
+
+      if (error) throw error;
+      
+      const ratings = data || [];
+      if (ratings.length > 0) {
+        const sum = ratings.reduce((acc, r) => acc + r.rating, 0);
+        setAverageRating(sum / ratings.length);
+        setTotalRatings(ratings.length);
+      }
+    } catch (error) {
+      console.error('Error fetching ratings:', error);
+    }
+  };
+
+  const fetchUserRating = async () => {
+    try {
+      const { data, error } = await supabase
+        .from('ratings')
+        .select('rating')
+        .eq('ad_id', id)
+        .eq('user_id', user?.id)
+        .maybeSingle();
+
+      if (data) {
+        setUserRating(data.rating);
+      }
+    } catch (error) {
+      console.error('Error fetching user rating:', error);
+    }
+  };
+
+  const submitRating = async (rating: number) => {
+    if (!user || user.id === ad.user_id) return;
+
+    try {
+      const { error } = await supabase
+        .from('ratings')
+        .upsert({
+          user_id: user.id,
+          ad_id: id,
+          rating
+        });
+
+      if (error) throw error;
+
+      setUserRating(rating);
+      fetchRatings();
+      toast({
+        title: t('Guuleysatay!', 'Success!'),
+        description: t('Qiimaynta waa la galiyey', 'Rating submitted successfully')
+      });
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      toast({
+        title: t('Khalad', 'Error'),
+        description: t('Khalad ayaa dhacay', 'Failed to submit rating'),
         variant: 'destructive'
       });
     }
@@ -357,6 +429,64 @@ export const AdDetail = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Ratings */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Star className="h-5 w-5" />
+              {t('Qiimeyn', 'Rating')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {/* Display Average Rating */}
+            {totalRatings > 0 && (
+              <div className="flex items-center gap-2 mb-4">
+                <div className="flex">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className={`h-5 w-5 ${
+                        star <= averageRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'
+                      }`}
+                    />
+                  ))}
+                </div>
+                <span className="text-lg font-semibold">{averageRating.toFixed(1)}</span>
+                <span className="text-muted-foreground">({totalRatings} {t('qiimeyn', 'ratings')})</span>
+              </div>
+            )}
+
+            {/* User Rating */}
+            {user && user.id !== ad.user_id && (
+              <div className="space-y-4">
+                <div>
+                  <p className="text-sm font-medium mb-2">
+                    {userRating > 0 
+                      ? t('Qiimeyntaada:', 'Your rating:') 
+                      : t('Qiimee xayeysiiskan:', 'Rate this ad:')
+                    }
+                  </p>
+                  <div className="flex gap-1">
+                    {[1, 2, 3, 4, 5].map((star) => (
+                      <button
+                        key={star}
+                        onClick={() => submitRating(star)}
+                        className="hover:scale-110 transition-transform"
+                      >
+                        <Star
+                          className={`h-6 w-6 ${
+                            star <= userRating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground hover:text-yellow-400'
+                          }`}
+                        />
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Comments */}
         <Card>

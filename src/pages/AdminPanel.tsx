@@ -113,6 +113,7 @@ export const AdminPanel = () => {
 
   const fetchPaymentApprovals = async () => {
     try {
+      console.log('Fetching payment approvals...');
       const { data, error } = await supabase
         .from("payment_approvals")
         .select(`
@@ -122,13 +123,14 @@ export const AdminPanel = () => {
         .order("created_at", { ascending: false });
 
       if (error) {
-        console.error("Error fetching payment approvals:", error);
+        console.error("Supabase error fetching payment approvals:", error);
         toast({
           title: t('Khalad', 'Error'),
           description: t('Khalad ayaa dhacay', 'Failed to fetch payment approvals'),
           variant: 'destructive'
         });
       } else {
+        console.log('Payment approvals fetched:', data);
         setPaymentApprovals(data || []);
       }
     } catch (error) {
@@ -198,12 +200,20 @@ export const AdminPanel = () => {
   const handleAdApproval = async (adId: string, action: 'approved' | 'rejected') => {
     setLoading(true);
     try {
-      const { error } = await supabase
+      console.log('Updating ad:', adId, 'to status:', action);
+      
+      const { data, error } = await supabase
         .from('ads')
         .update({ status: action })
-        .eq('id', adId);
+        .eq('id', adId)
+        .select();
 
-      if (error) throw error;
+      if (error) {
+        console.error('Supabase error:', error);
+        throw error;
+      }
+      
+      console.log('Updated ad data:', data);
 
       toast({
         title: t('Guuleysatay!', 'Success!'),
