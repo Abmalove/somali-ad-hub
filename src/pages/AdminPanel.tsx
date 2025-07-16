@@ -107,7 +107,10 @@ export const AdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from("payment_approvals")
-        .select("*")
+        .select(`
+          *,
+          profiles(email)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -383,13 +386,16 @@ export const AdminPanel = () => {
                   {paymentApprovals.map((payment) => (
                     <div key={payment.id} className="border rounded-lg p-4">
                       <p className="text-sm">
+                        <strong>Email:</strong> {payment.profiles?.email || 'N/A'}
+                      </p>
+                      <p className="text-sm">
                         <strong>Type:</strong> {payment.payment_type.replace('_', ' ')}
                       </p>
                       <p className="text-sm">
                         <strong>Amount:</strong> ${payment.amount}
                       </p>
                       <p className="text-sm">
-                        <strong>Payment Phone:</strong> {payment.payment_phone}
+                        <strong>Shop Phone:</strong> {payment.payment_phone}
                       </p>
                       <p className="text-sm">
                         <strong>Status:</strong> 
