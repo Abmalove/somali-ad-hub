@@ -14,9 +14,9 @@ import { Search as SearchIcon, Filter, MapPin, Star, Phone } from 'lucide-react'
 export const Search = () => {
   const { t } = useLanguage();
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
-  const [selectedRegion, setSelectedRegion] = useState('');
-  const [priceRange, setPriceRange] = useState('');
+  const [selectedCategory, setSelectedCategory] = useState('all');
+  const [selectedRegion, setSelectedRegion] = useState('all');
+  const [priceRange, setPriceRange] = useState('any');
   const [ads, setAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
 
@@ -35,13 +35,13 @@ export const Search = () => {
       if (searchTerm) {
         query = query.or(`title.ilike.%${searchTerm}%,description.ilike.%${searchTerm}%`);
       }
-      if (selectedCategory) {
+      if (selectedCategory && selectedCategory !== 'all') {
         query = query.eq('category', selectedCategory);
       }
-      if (selectedRegion) {
+      if (selectedRegion && selectedRegion !== 'all') {
         query = query.eq('region', selectedRegion);
       }
-      if (priceRange) {
+      if (priceRange && priceRange !== 'any') {
         const [min, max] = priceRange.split('-').map(Number);
         if (max) {
           query = query.gte('price', min).lte('price', max);
@@ -108,7 +108,7 @@ export const Search = () => {
                   <SelectValue placeholder={t('Qaybta', 'Category')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('Dhammaan', 'All Categories')}</SelectItem>
+                  <SelectItem value="all">{t('Dhammaan', 'All Categories')}</SelectItem>
                   {categories.map((category) => (
                     <SelectItem key={category.id} value={category.id}>
                       {category.icon} {t(category.soName, category.enName)}
@@ -122,7 +122,7 @@ export const Search = () => {
                   <SelectValue placeholder={t('Gobolka', 'Region')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('Dhammaan', 'All Regions')}</SelectItem>
+                  <SelectItem value="all">{t('Dhammaan', 'All Regions')}</SelectItem>
                   {regions.map((region) => (
                     <SelectItem key={region} value={region}>{region}</SelectItem>
                   ))}
@@ -134,7 +134,7 @@ export const Search = () => {
                   <SelectValue placeholder={t('Qiimaha', 'Price Range')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="">{t('Qiimo kasta', 'Any Price')}</SelectItem>
+                  <SelectItem value="any">{t('Qiimo kasta', 'Any Price')}</SelectItem>
                   <SelectItem value="0-100">$0 - $100</SelectItem>
                   <SelectItem value="100-500">$100 - $500</SelectItem>
                   <SelectItem value="500-1000">$500 - $1,000</SelectItem>
@@ -144,14 +144,14 @@ export const Search = () => {
               </Select>
             </div>
 
-            {(selectedCategory || selectedRegion || priceRange) && (
+            {(selectedCategory && selectedCategory !== 'all' || selectedRegion && selectedRegion !== 'all' || priceRange && priceRange !== 'any') && (
               <Button 
                 variant="outline" 
                 size="sm" 
                 onClick={() => {
-                  setSelectedCategory('');
-                  setSelectedRegion('');
-                  setPriceRange('');
+                  setSelectedCategory('all');
+                  setSelectedRegion('all');
+                  setPriceRange('any');
                 }}
                 className="mt-3"
               >
