@@ -8,7 +8,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Store, LogOut, Edit, Plus, Eye } from 'lucide-react';
+import { User, Store, LogOut, Edit, Plus, Eye, Settings, Shield } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const Profile = () => {
@@ -143,11 +143,25 @@ export const Profile = () => {
             <Plus className="h-4 w-4 mr-2" />
             {t('Xayeysiis Cusub', 'New Ad')}
           </Button>
-          <Button variant="outline" onClick={handleSignOut} className="h-12">
-            <LogOut className="h-4 w-4 mr-2" />
-            {t('Ka Bax', 'Sign Out')}
+          <Button variant="outline" onClick={() => navigate('/settings')} className="h-12">
+            <Settings className="h-4 w-4 mr-2" />
+            {t('Dejinta', 'Settings')}
           </Button>
         </div>
+
+        {/* Admin Panel Access */}
+        {profile?.subscription_plan === 'admin' && (
+          <Button onClick={() => navigate('/admin')} variant="outline" className="w-full">
+            <Shield className="h-4 w-4 mr-2" />
+            {t('Xarunta Maaraynta', 'Admin Panel')}
+          </Button>
+        )}
+
+        {/* Sign Out */}
+        <Button variant="destructive" onClick={handleSignOut} className="w-full">
+          <LogOut className="h-4 w-4 mr-2" />
+          {t('Ka Bax', 'Sign Out')}
+        </Button>
 
         {/* User Ads */}
         <Card className="shadow-medium">

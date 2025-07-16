@@ -10,6 +10,9 @@ import Login from "./pages/Login";
 import Register from "./pages/Register";
 import PostAd from "./pages/PostAd";
 import Profile from "./pages/Profile";
+import EditProfile from "./pages/EditProfile";
+import AdminPanel from "./pages/AdminPanel";
+import Settings from "./pages/Settings";
 import Search from "./pages/Search";
 import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
@@ -30,6 +33,9 @@ const App = () => (
               <Route path="/register" element={<Register />} />
               <Route path="/post" element={<PostAd />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/edit-profile" element={<EditProfile />} />
+              <Route path="/admin" element={<AdminPanel />} />
+              <Route path="/settings" element={<Settings />} />
               <Route path="/search" element={<Search />} />
               <Route path="/favorites" element={<Favorites />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}

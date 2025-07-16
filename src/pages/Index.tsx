@@ -9,6 +9,7 @@ import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { HeroSection } from '@/components/HeroSection';
+import { ShopSetup } from '@/components/ShopSetup';
 import { categories } from '@/data/categories';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Plus, TrendingUp, MapPin, Phone, Star, Eye } from 'lucide-react';
@@ -38,10 +39,31 @@ const Index = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('');
   const [loading, setLoading] = useState(true);
+  const [needsShopSetup, setNeedsShopSetup] = useState(false);
 
   useEffect(() => {
     fetchAds();
   }, []);
+
+  useEffect(() => {
+    if (user) {
+      checkShopSetup();
+    }
+  }, [user]);
+
+  const checkShopSetup = async () => {
+    try {
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('shop_setup_completed')
+        .eq('user_id', user?.id)
+        .maybeSingle();
+      
+      setNeedsShopSetup(!profile?.shop_setup_completed);
+    } catch (error) {
+      console.error('Error checking shop setup:', error);
+    }
+  };
 
   const fetchAds = async () => {
     try {
@@ -107,6 +129,10 @@ const Index = () => {
         </Card>
       </div>
     );
+  }
+
+  if (needsShopSetup && user) {
+    return <ShopSetup user={user} onComplete={() => setNeedsShopSetup(false)} />;
   }
 
   return (

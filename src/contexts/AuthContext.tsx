@@ -24,9 +24,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       setUser(session?.user ?? null);
       setIsLoading(false);
+      
+      // Check if user needs shop setup after sign in
+      if (event === 'SIGNED_IN' && session?.user) {
+        setTimeout(async () => {
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('shop_setup_completed')
+            .eq('user_id', session.user.id)
+            .maybeSingle();
+          
+          if (!profile?.shop_setup_completed) {
+            // User needs to set up their shop - this will be handled in the app
+            console.log('User needs shop setup');
+          }
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
