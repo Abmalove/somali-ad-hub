@@ -118,7 +118,7 @@ export const AdminPanel = () => {
         .from("payment_approvals")
         .select(`
           *,
-          profiles(email)
+          profiles!inner(email)
         `)
         .order("created_at", { ascending: false });
 

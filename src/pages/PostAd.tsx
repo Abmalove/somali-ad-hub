@@ -152,6 +152,11 @@ export const PostAd = () => {
     setLoading(true);
     
     try {
+      // Determine ad status based on boost options
+      // Only ads with boost or highlight options need approval
+      const needsApproval = adOptions.isBoost || adOptions.isHighlight;
+      const adStatus = needsApproval ? 'pending' : 'approved';
+      
       const adData = {
         user_id: user?.id,
         title: formData.title,
@@ -177,7 +182,7 @@ export const PostAd = () => {
         is_highlighted: adOptions.isHighlight,
         boost_expires_at: adOptions.isBoost || adOptions.isHighlight ? 
           new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString() : null,
-        status: 'pending'
+        status: adStatus
       };
 
       const { error } = await supabase
@@ -194,9 +199,14 @@ export const PostAd = () => {
           .eq('user_id', user?.id);
       }
 
-      const message = fromPayment 
-        ? "Payment submitted for approval! Your ad will be processed after payment verification."
-        : "Your ad has been submitted for review";
+      let message;
+      if (fromPayment) {
+        message = "Payment submitted for approval! Your ad will be processed after payment verification.";
+      } else if (needsApproval) {
+        message = "Your boosted ad has been submitted for review";
+      } else {
+        message = "Your ad is now live!";
+      }
       
       toast({
         title: t('Guuleysatay!', 'Success!'),
@@ -228,6 +238,7 @@ export const PostAd = () => {
           amount: paymentAmount,
           payment_phone: "+254757872221",
           payment_confirmed_by_user: true,
+          shop_name: formData.shop_name || profile?.shop_name || 'Unknown Shop'
         }]);
 
       if (error) {
