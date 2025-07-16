@@ -1,7 +1,7 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Plus, User, Search, Heart, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
+import { Home, Plus, User, Search, Heart, MessageCircle } from 'lucide-react';
 
 export const BottomNavigation = () => {
   const navigate = useNavigate();
