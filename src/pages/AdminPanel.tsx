@@ -6,12 +6,13 @@ import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, CheckCircle, XCircle, Eye, Settings, Users, Search, Store } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Eye, Settings, Users, Search, Store, ImageIcon, Phone, Calendar, MapPin } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const AdminPanel = () => {
@@ -210,7 +211,11 @@ export const AdminPanel = () => {
                       `Ad has been ${action === 'approved' ? 'approved' : 'rejected'}`)
       });
 
-      fetchPendingAds();
+      // Refresh all data
+      await Promise.all([
+        fetchPendingAds(),
+        fetchAllUsers()
+      ]);
     } catch (error) {
       console.error('Error updating ad status:', error);
       toast({
@@ -266,8 +271,11 @@ export const AdminPanel = () => {
                       `Request has been ${action === 'approved' ? 'approved' : 'rejected'}`)
       });
 
-      fetchApprovalRequests();
-      fetchAllUsers();
+      // Refresh all data
+      await Promise.all([
+        fetchApprovalRequests(),
+        fetchAllUsers()
+      ]);
     } catch (error) {
       console.error('Error handling subscription approval:', error);
       toast({
@@ -281,50 +289,51 @@ export const AdminPanel = () => {
   };
 
   const handlePaymentAction = async (paymentId: string, status: string) => {
-    const { error } = await supabase
-      .from("payment_approvals")
-      .update({ 
-        status,
-        admin_notes: status === 'confirmed' ? 'Payment verified and approved' : 'Payment rejected'
-      })
-      .eq("id", paymentId);
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from("payment_approvals")
+        .update({ 
+          status,
+          admin_notes: status === 'confirmed' ? 'Payment verified and approved' : 'Payment rejected'
+        })
+        .eq("id", paymentId);
 
-    if (error) {
+      if (error) throw error;
+
+      // If payment is confirmed, update user subscription if it's a pro upgrade
+      if (status === 'confirmed') {
+        const payment = paymentApprovals.find(p => p.id === paymentId);
+        if (payment?.payment_type === 'pro_upgrade') {
+          const { error: profileError } = await supabase
+            .from("profiles")
+            .update({ subscription_plan: 'pro' })
+            .eq("user_id", payment.user_id);
+
+          if (profileError) throw profileError;
+        }
+      }
+
+      toast({
+        title: t('Guuleysatay!', 'Success!'),
+        description: t(`Lacagta waa la ${status === 'confirmed' ? 'aqbalay' : 'diiday'}`, `Payment ${status}`)
+      });
+      
+      // Refresh all data
+      await Promise.all([
+        fetchPaymentApprovals(),
+        fetchAllUsers()
+      ]);
+    } catch (error) {
       console.error("Error updating payment:", error);
       toast({
         title: t('Khalad', 'Error'),
         description: t('Khalad ayaa dhacay', 'Failed to update payment status'),
         variant: 'destructive'
       });
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    // If payment is confirmed, update user subscription if it's a pro upgrade
-    if (status === 'confirmed') {
-      const payment = paymentApprovals.find(p => p.id === paymentId);
-      if (payment?.payment_type === 'pro_upgrade') {
-        const { error: profileError } = await supabase
-          .from("profiles")
-          .update({ subscription_plan: 'pro' })
-          .eq("user_id", payment.user_id);
-
-        if (profileError) {
-          console.error("Error updating user subscription:", profileError);
-          toast({
-            title: t('Khalad', 'Error'),
-            description: t('Khalad ayaa dhacay', 'Payment approved but failed to update subscription'),
-            variant: 'destructive'
-          });
-          return;
-        }
-      }
-    }
-
-    toast({
-      title: t('Guuleysatay!', 'Success!'),
-      description: t(`Lacagta waa la ${status === 'confirmed' ? 'aqbalay' : 'diiday'}`, `Payment ${status}`)
-    });
-    fetchPaymentApprovals();
   };
 
   if (!isAdmin) {
@@ -388,40 +397,144 @@ export const AdminPanel = () => {
                     {t('Ma jiraan xayeysiisyo sugaya', 'No pending ads')}
                   </p>
                 ) : (
-                  <div className="space-y-4">
-                    {pendingAds.map((ad) => (
-                      <div key={ad.id} className="border rounded-lg p-4">
-                        <div className="flex justify-between items-start mb-3">
-                          <div>
-                            <h3 className="font-semibold">{ad.title}</h3>
-                            <p className="text-sm text-muted-foreground">{ad.shop_name} • {ad.region}</p>
-                            <p className="text-sm font-medium">{ad.currency} {ad.price.toLocaleString()}</p>
-                          </div>
-                          <Badge variant="secondary">{ad.category}</Badge>
-                        </div>
-                        <p className="text-sm mb-4 line-clamp-2">{ad.description}</p>
-                        <div className="flex gap-2">
-                          <Button 
-                            size="sm" 
-                            onClick={() => handleAdApproval(ad.id, 'approved')}
-                            disabled={loading}
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            {t('Aqbal', 'Approve')}
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="destructive"
-                            onClick={() => handleAdApproval(ad.id, 'rejected')}
-                            disabled={loading}
-                          >
-                            <XCircle className="h-4 w-4 mr-1" />
-                            {t('Diid', 'Reject')}
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
+                  <ScrollArea className="h-[600px]">
+                    <div className="space-y-6 pr-4">
+                      {pendingAds.map((ad) => (
+                        <Card key={ad.id} className="border-l-4 border-l-yellow-500">
+                          <CardContent className="p-6">
+                            <div className="flex justify-between items-start mb-4">
+                              <div className="flex-1">
+                                <h3 className="text-lg font-semibold mb-2">{ad.title}</h3>
+                                <div className="grid grid-cols-2 gap-4 mb-3">
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Store className="h-4 w-4" />
+                                    {ad.shop_name}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <MapPin className="h-4 w-4" />
+                                    {ad.region}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Calendar className="h-4 w-4" />
+                                    {new Date(ad.created_at).toLocaleDateString()}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                    <Phone className="h-4 w-4" />
+                                    {ad.phone}
+                                  </div>
+                                </div>
+                                <p className="text-xl font-bold text-primary mb-2">
+                                  {ad.currency} {ad.price.toLocaleString()}
+                                </p>
+                              </div>
+                              <Badge variant="outline" className="ml-4">{ad.category}</Badge>
+                            </div>
+                            
+                            <div className="mb-4">
+                              <p className="text-sm leading-relaxed">{ad.description}</p>
+                            </div>
+
+                            {/* Ad Images */}
+                            {ad.image_urls && ad.image_urls.length > 0 && (
+                              <div className="mb-4">
+                                <h4 className="text-sm font-medium mb-2 flex items-center gap-2">
+                                  <ImageIcon className="h-4 w-4" />
+                                  {t('Sawirrada', 'Images')} ({ad.image_urls.length})
+                                </h4>
+                                <div className="flex gap-2 overflow-x-auto pb-2">
+                                  {ad.image_urls.map((url: string, index: number) => (
+                                    <Dialog key={index}>
+                                      <DialogTrigger asChild>
+                                        <img
+                                          src={url}
+                                          alt={`Ad image ${index + 1}`}
+                                          className="w-20 h-20 object-cover rounded-lg cursor-pointer hover:opacity-80 transition-opacity"
+                                        />
+                                      </DialogTrigger>
+                                      <DialogContent className="max-w-3xl">
+                                        <DialogHeader>
+                                          <DialogTitle>{t('Sawirka', 'Image')} {index + 1}</DialogTitle>
+                                        </DialogHeader>
+                                        <div className="flex justify-center">
+                                          <img
+                                            src={url}
+                                            alt={`Ad image ${index + 1}`}
+                                            className="max-w-full max-h-[70vh] object-contain rounded-lg"
+                                          />
+                                        </div>
+                                      </DialogContent>
+                                    </Dialog>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+
+                            {/* Additional Details */}
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 p-4 bg-muted/50 rounded-lg">
+                              {ad.brand && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Brand</span>
+                                  <p className="text-sm">{ad.brand}</p>
+                                </div>
+                              )}
+                              {ad.model && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Model</span>
+                                  <p className="text-sm">{ad.model}</p>
+                                </div>
+                              )}
+                              {ad.year && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Year</span>
+                                  <p className="text-sm">{ad.year}</p>
+                                </div>
+                              )}
+                              {ad.condition && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Condition</span>
+                                  <p className="text-sm">{ad.condition}</p>
+                                </div>
+                              )}
+                              {ad.job_title && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Job Title</span>
+                                  <p className="text-sm">{ad.job_title}</p>
+                                </div>
+                              )}
+                              {ad.experience && (
+                                <div>
+                                  <span className="text-xs font-medium text-muted-foreground">Experience</span>
+                                  <p className="text-sm">{ad.experience}</p>
+                                </div>
+                              )}
+                            </div>
+
+                            <div className="flex gap-3 pt-4 border-t">
+                              <Button 
+                                size="sm" 
+                                onClick={() => handleAdApproval(ad.id, 'approved')}
+                                disabled={loading}
+                                className="flex-1"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                {t('Aqbal', 'Approve')}
+                              </Button>
+                              <Button 
+                                size="sm" 
+                                variant="destructive"
+                                onClick={() => handleAdApproval(ad.id, 'rejected')}
+                                disabled={loading}
+                                className="flex-1"
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                {t('Diid', 'Reject')}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
@@ -431,58 +544,109 @@ export const AdminPanel = () => {
           <TabsContent value="payments">
             <Card>
               <CardHeader>
-                <CardTitle>Payment Approvals</CardTitle>
+                <CardTitle>{t('Ansixinta Lacagaha', 'Payment Approvals')} ({paymentApprovals.filter(p => p.status === 'pending').length})</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-4">
-                  {paymentApprovals.map((payment) => (
-                    <div key={payment.id} className="border rounded-lg p-4">
-                      <p className="text-sm">
-                        <strong>Email:</strong> {payment.profiles?.email || 'N/A'}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Type:</strong> {payment.payment_type.replace('_', ' ')}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Amount:</strong> ${payment.amount}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Shop Phone:</strong> {payment.payment_phone}
-                      </p>
-                      <p className="text-sm">
-                        <strong>Status:</strong> 
-                        <span className={`ml-1 ${payment.status === 'pending' ? 'text-yellow-600' : payment.status === 'confirmed' ? 'text-green-600' : 'text-red-600'}`}>
-                          {payment.status}
-                        </span>
-                      </p>
-                      <p className="text-sm">
-                        <strong>User Confirmed:</strong> {payment.payment_confirmed_by_user ? 'Yes' : 'No'}
-                      </p>
-                      {payment.status === 'pending' && (
-                        <div className="flex gap-2 mt-2">
-                          <Button
-                            onClick={() => handlePaymentAction(payment.id, "confirmed")}
-                            size="sm"
-                          >
-                            Approve Payment
-                          </Button>
-                          <Button
-                            onClick={() => handlePaymentAction(payment.id, "rejected")}
-                            variant="destructive"
-                            size="sm"
-                          >
-                            Reject Payment
-                          </Button>
-                        </div>
-                      )}
+                <ScrollArea className="h-[600px]">
+                  <div className="space-y-4 pr-4">
+                    {/* Pending Payments */}
+                    <div className="mb-6">
+                      <h3 className="text-lg font-semibold mb-4 text-yellow-600">
+                        {t('Lacago Sugaya', 'Pending Payments')} ({paymentApprovals.filter(p => p.status === 'pending').length})
+                      </h3>
+                      {paymentApprovals.filter(p => p.status === 'pending').map((payment) => (
+                        <Card key={payment.id} className="border-l-4 border-l-yellow-500 mb-4">
+                          <CardContent className="p-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {t('Email', 'Email')}: <span className="font-normal">{payment.profiles?.email || 'N/A'}</span>
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {t('Nooca', 'Type')}: <span className="font-normal">{payment.payment_type.replace('_', ' ')}</span>
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {t('Lacagta', 'Amount')}: <span className="font-normal text-lg text-primary">${payment.amount}</span>
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-sm font-medium">
+                                  {t('Taleefanka Dukaanka', 'Shop Phone')}: <span className="font-normal">{payment.payment_phone}</span>
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {t('Xaqiijinta Isticmaalaha', 'User Confirmed')}: 
+                                  <Badge variant={payment.payment_confirmed_by_user ? 'default' : 'secondary'} className="ml-2">
+                                    {payment.payment_confirmed_by_user ? 'Yes' : 'No'}
+                                  </Badge>
+                                </p>
+                                <p className="text-sm font-medium">
+                                  {t('Taariikh', 'Created')}: <span className="font-normal">{new Date(payment.created_at).toLocaleDateString()}</span>
+                                </p>
+                              </div>
+                            </div>
+                            {payment.shop_name && (
+                              <p className="text-sm font-medium mb-4">
+                                {t('Magaca Dukaanka', 'Shop Name')}: <span className="font-normal">{payment.shop_name}</span>
+                              </p>
+                            )}
+                            <div className="flex gap-3">
+                              <Button
+                                onClick={() => handlePaymentAction(payment.id, "confirmed")}
+                                size="sm"
+                                disabled={loading}
+                                className="flex-1"
+                              >
+                                <CheckCircle className="h-4 w-4 mr-2" />
+                                {t('Aqbal Lacagta', 'Approve Payment')}
+                              </Button>
+                              <Button
+                                onClick={() => handlePaymentAction(payment.id, "rejected")}
+                                variant="destructive"
+                                size="sm"
+                                disabled={loading}
+                                className="flex-1"
+                              >
+                                <XCircle className="h-4 w-4 mr-2" />
+                                {t('Diid Lacagta', 'Reject Payment')}
+                              </Button>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      ))}
                     </div>
-                  ))}
-                  {paymentApprovals.length === 0 && (
-                    <p className="text-center text-gray-500 py-8">
-                      No pending payments to review
-                    </p>
-                  )}
-                </div>
+
+                    {/* Processed Payments */}
+                    <div>
+                      <h3 className="text-lg font-semibold mb-4 text-muted-foreground">
+                        {t('Lacago la Fuliyay', 'Processed Payments')} ({paymentApprovals.filter(p => p.status !== 'pending').length})
+                      </h3>
+                      {paymentApprovals.filter(p => p.status !== 'pending').map((payment) => (
+                        <Card key={payment.id} className={`border-l-4 mb-4 ${payment.status === 'confirmed' ? 'border-l-green-500' : 'border-l-red-500'}`}>
+                          <CardContent className="p-4">
+                            <div className="flex justify-between items-start mb-2">
+                              <div>
+                                <p className="font-medium">{payment.profiles?.email || 'N/A'}</p>
+                                <p className="text-sm text-muted-foreground">{payment.payment_type.replace('_', ' ')} • ${payment.amount}</p>
+                              </div>
+                              <Badge variant={payment.status === 'confirmed' ? 'default' : 'destructive'}>
+                                {payment.status}
+                              </Badge>
+                            </div>
+                            {payment.admin_notes && (
+                              <p className="text-sm text-muted-foreground">{payment.admin_notes}</p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      ))}
+                    </div>
+
+                    {paymentApprovals.length === 0 && (
+                      <p className="text-center text-muted-foreground py-8">
+                        {t('Ma jiraan lacago la raadayo', 'No payments to review')}
+                      </p>
+                    )}
+                  </div>
+                </ScrollArea>
               </CardContent>
             </Card>
           </TabsContent>
