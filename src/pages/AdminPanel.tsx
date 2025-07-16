@@ -4,12 +4,14 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
-import { Shield, CheckCircle, XCircle, Eye, Settings, Users } from 'lucide-react';
+import { Shield, CheckCircle, XCircle, Eye, Settings, Users, Search, Store } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const AdminPanel = () => {
@@ -24,6 +26,9 @@ export const AdminPanel = () => {
   const [paymentApprovals, setPaymentApprovals] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [selectedUser, setSelectedUser] = useState<any>(null);
+  const [userAds, setUserAds] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -139,6 +144,21 @@ export const AdminPanel = () => {
       setAllUsers(data || []);
     } catch (error) {
       console.error('Error fetching users:', error);
+    }
+  };
+
+  const fetchUserAds = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('ads')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserAds(data || []);
+    } catch (error) {
+      console.error('Error fetching user ads:', error);
     }
   };
 
@@ -497,27 +517,105 @@ export const AdminPanel = () => {
             <Card>
               <CardHeader>
                 <CardTitle>{t('Dhammaan Isticmaalayaasha', 'All Users')} ({allUsers.length})</CardTitle>
+                <div className="flex items-center gap-2 mt-4">
+                  <Search className="h-4 w-4" />
+                  <Input
+                    placeholder={t('Raadi isticmaalayaasha...', 'Search users...')}
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="max-w-sm"
+                  />
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {allUsers.map((user) => (
-                    <div key={user.id} className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <p className="font-medium">{user.email}</p>
-                        {user.shop_name && (
-                          <p className="text-sm text-muted-foreground">{user.shop_name}</p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Badge variant={user.subscription_plan === 'pro' ? 'default' : 'secondary'}>
-                          {user.subscription_plan || 'free'}
-                        </Badge>
-                        <span className="text-sm text-muted-foreground">
-                          {user.ad_count || 0} {t('xayeysiis', 'ads')}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
+                  {allUsers
+                    .filter(user => 
+                      user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                      (user.shop_name && user.shop_name.toLowerCase().includes(searchTerm.toLowerCase()))
+                    )
+                    .map((user) => (
+                      <Dialog key={user.id}>
+                        <DialogTrigger asChild>
+                          <div 
+                            className="flex items-center justify-between p-3 border rounded-lg cursor-pointer hover:bg-muted/50 transition-colors"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              fetchUserAds(user.user_id);
+                            }}
+                          >
+                            <div>
+                              <p className="font-medium">{user.email}</p>
+                              {user.shop_name && (
+                                <p className="text-sm text-muted-foreground flex items-center gap-1">
+                                  <Store className="h-3 w-3" />
+                                  {user.shop_name}
+                                </p>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Badge variant={user.subscription_plan === 'pro' ? 'default' : 'secondary'}>
+                                {user.subscription_plan || 'free'}
+                              </Badge>
+                              <span className="text-sm text-muted-foreground">
+                                {user.ad_count || 0} {t('xayeysiis', 'ads')}
+                              </span>
+                            </div>
+                          </div>
+                        </DialogTrigger>
+                        <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
+                          <DialogHeader>
+                            <DialogTitle>{t('Faahfaahinta Isticmaalaha', 'User Details')}</DialogTitle>
+                          </DialogHeader>
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <div>
+                                <h3 className="font-semibold mb-2">{t('Macluumaadka Guud', 'General Information')}</h3>
+                                <div className="space-y-2">
+                                  <p><strong>Email:</strong> {user.email}</p>
+                                  <p><strong>Phone:</strong> {user.phone || 'N/A'}</p>
+                                  <p><strong>Subscription:</strong> {user.subscription_plan || 'free'}</p>
+                                  <p><strong>Total Ads:</strong> {user.ad_count || 0}</p>
+                                </div>
+                              </div>
+                              {user.shop_name && (
+                                <div>
+                                  <h3 className="font-semibold mb-2">{t('Macluumaadka Dukaanka', 'Shop Information')}</h3>
+                                  <div className="space-y-2">
+                                    <p><strong>Shop Name:</strong> {user.shop_name}</p>
+                                    <p><strong>Region:</strong> {user.shop_region || 'N/A'}</p>
+                                    <p><strong>Setup Complete:</strong> {user.shop_setup_completed ? 'Yes' : 'No'}</p>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                            <div>
+                              <h3 className="font-semibold mb-2">{t('Xayeysiisyada Isticmaalaha', 'User Ads')} ({userAds.length})</h3>
+                              {userAds.length === 0 ? (
+                                <p className="text-muted-foreground">{t('Ma jiraan xayeysiisyo', 'No ads found')}</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {userAds.map((ad) => (
+                                    <div key={ad.id} className="border rounded-lg p-3">
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <h4 className="font-medium">{ad.title}</h4>
+                                          <p className="text-sm text-muted-foreground">{ad.category} • {ad.currency} {ad.price.toLocaleString()}</p>
+                                        </div>
+                                        <Badge variant={ad.status === 'approved' ? 'default' : ad.status === 'pending' ? 'secondary' : 'destructive'}>
+                                          {ad.status}
+                                        </Badge>
+                                      </div>
+                                      <p className="text-sm mt-2 line-clamp-2">{ad.description}</p>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </DialogContent>
+                      </Dialog>
+                    ))}
                 </div>
               </CardContent>
             </Card>
