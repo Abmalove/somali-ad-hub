@@ -29,6 +29,8 @@ export const AdminPanel = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedUser, setSelectedUser] = useState<any>(null);
   const [userAds, setUserAds] = useState<any[]>([]);
+  const [userPayments, setUserPayments] = useState<any[]>([]);
+  const [userApprovals, setUserApprovals] = useState<any[]>([]);
 
   useEffect(() => {
     if (!user) {
@@ -159,6 +161,36 @@ export const AdminPanel = () => {
       setUserAds(data || []);
     } catch (error) {
       console.error('Error fetching user ads:', error);
+    }
+  };
+
+  const fetchUserPayments = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('payment_approvals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserPayments(data || []);
+    } catch (error) {
+      console.error('Error fetching user payments:', error);
+    }
+  };
+
+  const fetchUserApprovals = async (userId: string) => {
+    try {
+      const { data, error } = await supabase
+        .from('admin_approvals')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setUserApprovals(data || []);
+    } catch (error) {
+      console.error('Error fetching user approvals:', error);
     }
   };
 
@@ -542,6 +574,8 @@ export const AdminPanel = () => {
                             onClick={() => {
                               setSelectedUser(user);
                               fetchUserAds(user.user_id);
+                              fetchUserPayments(user.user_id);
+                              fetchUserApprovals(user.user_id);
                             }}
                           >
                             <div>
@@ -607,6 +641,110 @@ export const AdminPanel = () => {
                                         </Badge>
                                       </div>
                                       <p className="text-sm mt-2 line-clamp-2">{ad.description}</p>
+                                      {ad.status === 'pending' && (
+                                        <div className="flex gap-2 mt-2">
+                                          <Button 
+                                            size="sm" 
+                                            onClick={() => handleAdApproval(ad.id, 'approved')}
+                                            disabled={loading}
+                                          >
+                                            <CheckCircle className="h-4 w-4 mr-1" />
+                                            {t('Aqbal', 'Approve')}
+                                          </Button>
+                                          <Button 
+                                            size="sm" 
+                                            variant="destructive"
+                                            onClick={() => handleAdApproval(ad.id, 'rejected')}
+                                            disabled={loading}
+                                          >
+                                            <XCircle className="h-4 w-4 mr-1" />
+                                            {t('Diid', 'Reject')}
+                                          </Button>
+                                        </div>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-semibold mb-2">{t('Lacagaha Sugaya', 'Pending Payments')} ({userPayments.filter(p => p.status === 'pending').length})</h3>
+                              {userPayments.filter(p => p.status === 'pending').length === 0 ? (
+                                <p className="text-muted-foreground">{t('Ma jiraan lacago sugaya', 'No pending payments')}</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {userPayments.filter(p => p.status === 'pending').map((payment) => (
+                                    <div key={payment.id} className="border rounded-lg p-3">
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <h4 className="font-medium">{payment.payment_type.replace('_', ' ')}</h4>
+                                          <p className="text-sm text-muted-foreground">${payment.amount} • {payment.payment_phone}</p>
+                                        </div>
+                                        <Badge variant="secondary">{payment.status}</Badge>
+                                      </div>
+                                      <div className="flex gap-2 mt-2">
+                                        <Button 
+                                          size="sm" 
+                                          onClick={() => handlePaymentAction(payment.id, 'confirmed')}
+                                          disabled={loading}
+                                        >
+                                          <CheckCircle className="h-4 w-4 mr-1" />
+                                          {t('Aqbal', 'Approve')}
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="destructive"
+                                          onClick={() => handlePaymentAction(payment.id, 'rejected')}
+                                          disabled={loading}
+                                        >
+                                          <XCircle className="h-4 w-4 mr-1" />
+                                          {t('Diid', 'Reject')}
+                                        </Button>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              )}
+                            </div>
+                            
+                            <div>
+                              <h3 className="font-semibold mb-2">{t('Codsiyada Pro', 'Pro Plan Requests')} ({userApprovals.filter(a => a.status === 'pending').length})</h3>
+                              {userApprovals.filter(a => a.status === 'pending').length === 0 ? (
+                                <p className="text-muted-foreground">{t('Ma jiraan codsyo Pro', 'No pending pro requests')}</p>
+                              ) : (
+                                <div className="space-y-2">
+                                  {userApprovals.filter(a => a.status === 'pending').map((approval) => (
+                                    <div key={approval.id} className="border rounded-lg p-3">
+                                      <div className="flex justify-between items-start">
+                                        <div>
+                                          <h4 className="font-medium">{approval.approval_type.replace('_', ' ')}</h4>
+                                          <p className="text-sm text-muted-foreground">${approval.amount} • {approval.subscription_duration} days</p>
+                                        </div>
+                                        <Badge variant="secondary">{approval.status}</Badge>
+                                      </div>
+                                      {approval.notes && (
+                                        <p className="text-sm mt-2 text-muted-foreground">{approval.notes}</p>
+                                      )}
+                                      <div className="flex gap-2 mt-2">
+                                        <Button 
+                                          size="sm" 
+                                          onClick={() => handleSubscriptionApproval(approval.id, 'approved')}
+                                          disabled={loading}
+                                        >
+                                          <CheckCircle className="h-4 w-4 mr-1" />
+                                          {t('Aqbal', 'Approve')}
+                                        </Button>
+                                        <Button 
+                                          size="sm" 
+                                          variant="destructive"
+                                          onClick={() => handleSubscriptionApproval(approval.id, 'rejected')}
+                                          disabled={loading}
+                                        >
+                                          <XCircle className="h-4 w-4 mr-1" />
+                                          {t('Diid', 'Reject')}
+                                        </Button>
+                                      </div>
                                     </div>
                                   ))}
                                 </div>
