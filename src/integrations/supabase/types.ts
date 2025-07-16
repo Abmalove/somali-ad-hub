@@ -239,6 +239,48 @@ export type Database = {
           },
         ]
       }
+      payment_approvals: {
+        Row: {
+          ad_id: string | null
+          admin_notes: string | null
+          amount: number
+          created_at: string
+          id: string
+          payment_confirmed_by_user: boolean | null
+          payment_phone: string
+          payment_type: string
+          status: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          ad_id?: string | null
+          admin_notes?: string | null
+          amount: number
+          created_at?: string
+          id?: string
+          payment_confirmed_by_user?: boolean | null
+          payment_phone: string
+          payment_type: string
+          status?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          ad_id?: string | null
+          admin_notes?: string | null
+          amount?: number
+          created_at?: string
+          id?: string
+          payment_confirmed_by_user?: boolean | null
+          payment_phone?: string
+          payment_type?: string
+          status?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           ad_count: number | null

@@ -21,6 +21,7 @@ export const AdminPanel = () => {
   const [loading, setLoading] = useState(false);
   const [pendingAds, setPendingAds] = useState<any[]>([]);
   const [approvalRequests, setApprovalRequests] = useState<any[]>([]);
+  const [paymentApprovals, setPaymentApprovals] = useState<any[]>([]);
   const [allUsers, setAllUsers] = useState<any[]>([]);
   const [isAdmin, setIsAdmin] = useState(false);
 
@@ -36,6 +37,7 @@ export const AdminPanel = () => {
     if (isAdmin) {
       fetchPendingAds();
       fetchApprovalRequests();
+      fetchPaymentApprovals();
       fetchAllUsers();
     }
   }, [isAdmin]);
@@ -95,6 +97,28 @@ export const AdminPanel = () => {
       setApprovalRequests(data || []);
     } catch (error) {
       console.error('Error fetching approval requests:', error);
+    }
+  };
+
+  const fetchPaymentApprovals = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("payment_approvals")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (error) {
+        console.error("Error fetching payment approvals:", error);
+        toast({
+          title: t('Khalad', 'Error'),
+          description: t('Khalad ayaa dhacay', 'Failed to fetch payment approvals'),
+          variant: 'destructive'
+        });
+      } else {
+        setPaymentApprovals(data || []);
+      }
+    } catch (error) {
+      console.error('Error fetching payment approvals:', error);
     }
   };
 
@@ -198,6 +222,53 @@ export const AdminPanel = () => {
     }
   };
 
+  const handlePaymentAction = async (paymentId: string, status: string) => {
+    const { error } = await supabase
+      .from("payment_approvals")
+      .update({ 
+        status,
+        admin_notes: status === 'confirmed' ? 'Payment verified and approved' : 'Payment rejected'
+      })
+      .eq("id", paymentId);
+
+    if (error) {
+      console.error("Error updating payment:", error);
+      toast({
+        title: t('Khalad', 'Error'),
+        description: t('Khalad ayaa dhacay', 'Failed to update payment status'),
+        variant: 'destructive'
+      });
+      return;
+    }
+
+    // If payment is confirmed, update user subscription if it's a pro upgrade
+    if (status === 'confirmed') {
+      const payment = paymentApprovals.find(p => p.id === paymentId);
+      if (payment?.payment_type === 'pro_upgrade') {
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .update({ subscription_plan: 'pro' })
+          .eq("user_id", payment.user_id);
+
+        if (profileError) {
+          console.error("Error updating user subscription:", profileError);
+          toast({
+            title: t('Khalad', 'Error'),
+            description: t('Khalad ayaa dhacay', 'Payment approved but failed to update subscription'),
+            variant: 'destructive'
+          });
+          return;
+        }
+      }
+    }
+
+    toast({
+      title: t('Guuleysatay!', 'Success!'),
+      description: t(`Lacagta waa la ${status === 'confirmed' ? 'aqbalay' : 'diiday'}`, `Payment ${status}`)
+    });
+    fetchPaymentApprovals();
+  };
+
   if (!isAdmin) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -224,10 +295,14 @@ export const AdminPanel = () => {
         </Card>
 
         <Tabs defaultValue="ads" className="space-y-6">
-          <TabsList className="grid grid-cols-3 w-full">
+          <TabsList className="grid grid-cols-4 w-full">
             <TabsTrigger value="ads" className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
               {t('Xayeysiisyo', 'Ads')}
+            </TabsTrigger>
+            <TabsTrigger value="payments" className="flex items-center gap-2">
+              <Settings className="h-4 w-4" />
+              {t('Lacagaha', 'Payments')}
             </TabsTrigger>
             <TabsTrigger value="subscriptions" className="flex items-center gap-2">
               <Settings className="h-4 w-4" />
@@ -286,6 +361,63 @@ export const AdminPanel = () => {
                     ))}
                   </div>
                 )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Payment Approvals Tab */}
+          <TabsContent value="payments">
+            <Card>
+              <CardHeader>
+                <CardTitle>Payment Approvals</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {paymentApprovals.map((payment) => (
+                    <div key={payment.id} className="border rounded-lg p-4">
+                      <p className="text-sm">
+                        <strong>Type:</strong> {payment.payment_type.replace('_', ' ')}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Amount:</strong> ${payment.amount}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Payment Phone:</strong> {payment.payment_phone}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Status:</strong> 
+                        <span className={`ml-1 ${payment.status === 'pending' ? 'text-yellow-600' : payment.status === 'confirmed' ? 'text-green-600' : 'text-red-600'}`}>
+                          {payment.status}
+                        </span>
+                      </p>
+                      <p className="text-sm">
+                        <strong>User Confirmed:</strong> {payment.payment_confirmed_by_user ? 'Yes' : 'No'}
+                      </p>
+                      {payment.status === 'pending' && (
+                        <div className="flex gap-2 mt-2">
+                          <Button
+                            onClick={() => handlePaymentAction(payment.id, "confirmed")}
+                            size="sm"
+                          >
+                            Approve Payment
+                          </Button>
+                          <Button
+                            onClick={() => handlePaymentAction(payment.id, "rejected")}
+                            variant="destructive"
+                            size="sm"
+                          >
+                            Reject Payment
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                  {paymentApprovals.length === 0 && (
+                    <p className="text-center text-gray-500 py-8">
+                      No pending payments to review
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
           </TabsContent>

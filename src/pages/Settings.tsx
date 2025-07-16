@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
@@ -16,6 +17,9 @@ export const Settings = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false);
+  const [showPaymentConfirm, setShowPaymentConfirm] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   
   const [loading, setLoading] = useState(false);
   const [profile, setProfile] = useState<any>(null);
@@ -46,59 +50,74 @@ export const Settings = () => {
     }
   };
 
-  const requestProUpgrade = async () => {
-    setLoading(true);
+  const handleLogout = async () => {
     try {
-      // Check if user already has a pending request
-      const { data: existingRequest, error: checkError } = await supabase
-        .from('admin_approvals')
-        .select('*')
-        .eq('user_id', user?.id)
-        .eq('approval_type', 'subscription_upgrade')
-        .eq('status', 'pending')
-        .maybeSingle();
-
-      if (checkError && checkError.code !== 'PGRST116') {
-        throw checkError;
-      }
-
-      if (existingRequest) {
+      const { error } = await supabase.auth.signOut();
+      if (error) {
         toast({
-          title: t('Codsigi wuu jiraa', 'Request Already Exists'),
-          description: t('Codsigaaga waa sugaya', 'Your request is pending approval'),
+          title: t('Khalad', 'Error'),
+          description: t('Khalad ayaa dhacay', 'Error logging out'),
           variant: 'destructive'
         });
+      } else {
+        toast({
+          title: t('Guuleysatay!', 'Success!'),
+          description: t('Si guul leh ayaad uga baxday', 'Logged out successfully')
+        });
+        navigate("/");
+      }
+    } catch (error) {
+      toast({
+        title: t('Khalad', 'Error'),
+        description: t('Khalad ayaa dhacay', 'Unexpected error occurred'),
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const handleUpgradeToPro = () => {
+    setShowPaymentDialog(true);
+  };
+
+  const handlePaymentConfirm = async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase
+        .from("payment_approvals")
+        .insert([{
+          user_id: user?.id,
+          payment_type: 'pro_upgrade',
+          amount: 10,
+          payment_phone: "+254757872221",
+          payment_confirmed_by_user: true,
+        }]);
+
+      if (error) {
+        console.error("Error submitting payment:", error);
+        toast({
+          title: t('Khalad', 'Error'),
+          description: t('Khalad ayaa dhacay', 'Failed to submit payment. Please try again.'),
+          variant: 'destructive'
+        });
+        setIsLoading(false);
         return;
       }
 
-      // Create new approval request
-      const { error } = await supabase
-        .from('admin_approvals')
-        .insert({
-          user_id: user?.id,
-          approval_type: 'subscription_upgrade',
-          amount: 10,
-          notes: 'Pro subscription upgrade request',
-          status: 'pending'
-        });
-
-      if (error) throw error;
-
       toast({
         title: t('Guuleysatay!', 'Success!'),
-        description: t('Codsigaaga waa la diray maamulka', 'Your upgrade request has been sent to admin')
+        description: t('Codsigaaga waa la diray maaraynta', 'Pro upgrade payment submitted for approval!')
       });
-
+      setShowPaymentConfirm(false);
+      setShowPaymentDialog(false);
     } catch (error) {
-      console.error('Error requesting upgrade:', error);
+      console.error("Unexpected error:", error);
       toast({
         title: t('Khalad', 'Error'),
-        description: t('Khalad ayaa dhacay', 'An error occurred'),
+        description: t('Khalad ayaa dhacay', 'An unexpected error occurred. Please try again.'),
         variant: 'destructive'
       });
-    } finally {
-      setLoading(false);
     }
+    setIsLoading(false);
   };
 
   if (!user) {
@@ -156,58 +175,30 @@ export const Settings = () => {
           </CardContent>
         </Card>
 
-        {/* Plan Features */}
-        <div className="grid gap-4 mb-6">
-          {/* Free Plan */}
-          <Card className={currentPlan === 'free' ? 'ring-2 ring-primary' : ''}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <span>{t('Qorshaha Bilaashka ah', 'Free Plan')}</span>
-                {currentPlan === 'free' && <Badge>{t('Hadda', 'Current')}</Badge>}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm">
-                <li>✓ {t('Ilaa 5 xayeysiis', 'Up to 5 ads')}</li>
-                <li>✓ {t('Sawirro asaasi ah', 'Basic image uploads')}</li>
-                <li>✓ {t('Taageero asaasi ah', 'Basic support')}</li>
-              </ul>
-            </CardContent>
-          </Card>
-
-          {/* Pro Plan */}
-          <Card className={currentPlan === 'pro' ? 'ring-2 ring-yellow-500' : ''}>
-            <CardHeader>
-              <CardTitle className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <Crown className="h-5 w-5 text-yellow-500" />
-                  <span>{t('Qorshaha Pro', 'Pro Plan')}</span>
-                </div>
-                {currentPlan === 'pro' && <Badge className="bg-yellow-500">{t('Hadda', 'Current')}</Badge>}
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <ul className="space-y-2 text-sm mb-4">
-                <li>✓ {t('Xayeysiisyo aan xadidnayn', 'Unlimited ads')}</li>
-                <li>✓ {t('Sawirro badan', 'Multiple images')}</li>
-                <li>✓ {t('Xayeysiisyada kor u qaad', 'Boost ads')}</li>
-                <li>✓ {t('Xayeysiisyada highlight garee', 'Highlight ads')}</li>
-                <li>✓ {t('Taageero horumarsan', 'Priority support')}</li>
-              </ul>
-              <p className="text-lg font-semibold mb-4">$10/{t('bil', 'month')}</p>
-              {currentPlan !== 'pro' && currentPlan !== 'admin' && (
-                <Button 
-                  onClick={requestProUpgrade}
-                  disabled={loading}
-                  className="w-full"
-                >
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  {loading ? t('Sugaya...', 'Loading...') : t('Codsii Pro', 'Request Pro')}
-                </Button>
-              )}
-            </CardContent>
-          </Card>
-        </div>
+        <Card className="shadow-medium mb-6">
+          <CardHeader>
+            <CardTitle>Subscription</CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="p-4 bg-accent rounded-lg">
+              <p className="font-semibold">Current Plan: {profile?.subscription_plan || 'Free'}</p>
+              <p className="text-sm text-muted-foreground">
+                {profile?.subscription_plan === 'free' 
+                  ? 'Upgrade to Pro for unlimited ads and priority support'
+                  : 'You have access to all premium features'
+                }
+              </p>
+            </div>
+            {profile?.subscription_plan === 'free' && (
+              <Button 
+                onClick={handleUpgradeToPro}
+                className="w-full"
+              >
+                Upgrade to Pro - $10
+              </Button>
+            )}
+          </CardContent>
+        </Card>
 
         {/* Admin Panel Access */}
         {isAdmin && (
@@ -243,8 +234,84 @@ export const Settings = () => {
             >
               {t('Wax ka beddel Profile-ka', 'Edit Profile')}
             </Button>
+            <Button 
+              onClick={handleLogout}
+              variant="destructive"
+              className="w-full"
+            >
+              Logout
+            </Button>
           </CardContent>
         </Card>
+
+        {/* Payment Dialog */}
+        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Upgrade to Pro</DialogTitle>
+              <DialogDescription>
+                Upgrade to Pro for unlimited ads and priority support.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="p-4 bg-accent rounded-lg">
+                <h3 className="font-semibold mb-2">Payment Details</h3>
+                <p><strong>Amount:</strong> $10</p>
+                <p><strong>Payment Method:</strong> M-Pesa</p>
+                <p><strong>Pay to:</strong> +254757872221</p>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Please send the payment to the number above and confirm below.
+                </p>
+              </div>
+              <div className="flex gap-2">
+                <Button 
+                  variant="outline" 
+                  onClick={() => setShowPaymentDialog(false)}
+                  className="flex-1"
+                >
+                  Cancel
+                </Button>
+                <Button 
+                  onClick={() => {
+                    setShowPaymentDialog(false);
+                    setShowPaymentConfirm(true);
+                  }}
+                  className="flex-1"
+                >
+                  I've Made Payment
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Confirmation Dialog */}
+        <Dialog open={showPaymentConfirm} onOpenChange={setShowPaymentConfirm}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Confirm Payment</DialogTitle>
+              <DialogDescription>
+                Please confirm that you have made the payment of $10 to +254757872221
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => setShowPaymentConfirm(false)}
+                className="flex-1"
+              >
+                Cancel
+              </Button>
+              <Button 
+                onClick={handlePaymentConfirm}
+                disabled={isLoading}
+                className="flex-1"
+              >
+                {isLoading ? "Processing..." : "Yes, I Confirm Payment"}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <BottomNavigation />
