@@ -10,6 +10,7 @@ import { LanguageToggle } from '@/components/LanguageToggle';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { HeroSection } from '@/components/HeroSection';
 import { ShopSetup } from '@/components/ShopSetup';
+import { NotificationSystem } from '@/components/NotificationSystem';
 import { categories } from '@/data/categories';
 import { supabase } from '@/integrations/supabase/client';
 import { Search, Plus, TrendingUp, MapPin, Phone, Star, Eye } from 'lucide-react';
@@ -137,7 +138,10 @@ const Index = () => {
 
   return (
     <div className="min-h-screen bg-background pb-20">
-      <LanguageToggle />
+      <div className="flex justify-between items-center p-4">
+        <LanguageToggle />
+        <NotificationSystem />
+      </div>
       
       {/* Hero Section */}
       <div className="bg-gradient-primary text-primary-foreground p-6">

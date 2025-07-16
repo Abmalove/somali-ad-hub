@@ -16,6 +16,8 @@ import Settings from "./pages/Settings";
 import Search from "./pages/Search";
 import Favorites from "./pages/Favorites";
 import NotFound from "./pages/NotFound";
+import { AdDetail } from "./pages/AdDetail";
+import { Messages } from "./pages/Messages";
 
 const queryClient = new QueryClient();
 
@@ -38,6 +40,8 @@ const App = () => (
               <Route path="/settings" element={<Settings />} />
               <Route path="/search" element={<Search />} />
               <Route path="/favorites" element={<Favorites />} />
+              <Route path="/ad/:id" element={<AdDetail />} />
+              <Route path="/messages" element={<Messages />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

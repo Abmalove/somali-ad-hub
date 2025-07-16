@@ -104,7 +104,10 @@ export const AdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from("payment_approvals")
-        .select("*")
+        .select(`
+          *,
+          profiles!payment_approvals_user_id_fkey(shop_name, phone)
+        `)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -295,7 +298,7 @@ export const AdminPanel = () => {
         </Card>
 
         <Tabs defaultValue="ads" className="space-y-6">
-          <TabsList className="grid grid-cols-4 w-full">
+          <TabsList className="grid grid-cols-5 w-full">
             <TabsTrigger value="ads" className="flex items-center gap-2">
               <Eye className="h-4 w-4" />
               {t('Xayeysiisyo', 'Ads')}
@@ -311,6 +314,10 @@ export const AdminPanel = () => {
             <TabsTrigger value="users" className="flex items-center gap-2">
               <Users className="h-4 w-4" />
               {t('Isticmaalayaasha', 'Users')}
+            </TabsTrigger>
+            <TabsTrigger value="messages" className="flex items-center gap-2">
+              <Users className="h-4 w-4" />
+              {t('Farriimaad', 'Messages')}
             </TabsTrigger>
           </TabsList>
 
@@ -380,6 +387,12 @@ export const AdminPanel = () => {
                       </p>
                       <p className="text-sm">
                         <strong>Amount:</strong> ${payment.amount}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Shop Name:</strong> {payment.profiles?.shop_name || payment.shop_name || 'N/A'}
+                      </p>
+                      <p className="text-sm">
+                        <strong>Shop Phone:</strong> {payment.profiles?.phone || 'N/A'}
                       </p>
                       <p className="text-sm">
                         <strong>Payment Phone:</strong> {payment.payment_phone}
@@ -505,6 +518,25 @@ export const AdminPanel = () => {
                       </div>
                     </div>
                   ))}
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Messages Tab */}
+          <TabsContent value="messages">
+            <Card>
+              <CardHeader>
+                <CardTitle>{t('Farriimaadaha', 'Messages')}</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-center text-muted-foreground py-8">
+                  {t('Farriimaadaha waxaa laga maareeyaa bogga khaaska ah', 'Messages are managed from the dedicated messages page')}
+                  <div className="mt-4">
+                    <Button onClick={() => navigate('/messages')}>
+                      {t('Aad u farriimaadaha', 'Go to Messages')}
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

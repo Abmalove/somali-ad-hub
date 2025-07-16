@@ -239,6 +239,39 @@ export type Database = {
           },
         ]
       }
+      notifications: {
+        Row: {
+          created_at: string | null
+          id: string
+          message: string
+          read: boolean | null
+          related_id: string | null
+          title: string
+          type: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          message: string
+          read?: boolean | null
+          related_id?: string | null
+          title: string
+          type: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          message?: string
+          read?: boolean | null
+          related_id?: string | null
+          title?: string
+          type?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       payment_approvals: {
         Row: {
           ad_id: string | null
@@ -249,6 +282,7 @@ export type Database = {
           payment_confirmed_by_user: boolean | null
           payment_phone: string
           payment_type: string
+          shop_name: string | null
           status: string
           updated_at: string
           user_id: string
@@ -262,6 +296,7 @@ export type Database = {
           payment_confirmed_by_user?: boolean | null
           payment_phone: string
           payment_type: string
+          shop_name?: string | null
           status?: string
           updated_at?: string
           user_id: string
@@ -275,6 +310,7 @@ export type Database = {
           payment_confirmed_by_user?: boolean | null
           payment_phone?: string
           payment_type?: string
+          shop_name?: string | null
           status?: string
           updated_at?: string
           user_id?: string
@@ -293,6 +329,7 @@ export type Database = {
           shop_region: string | null
           shop_setup_completed: boolean | null
           subscription_plan: string | null
+          trial_ends_at: string | null
           updated_at: string
           user_id: string
         }
@@ -307,6 +344,7 @@ export type Database = {
           shop_region?: string | null
           shop_setup_completed?: boolean | null
           subscription_plan?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -321,6 +359,7 @@ export type Database = {
           shop_region?: string | null
           shop_setup_completed?: boolean | null
           subscription_plan?: string | null
+          trial_ends_at?: string | null
           updated_at?: string
           user_id?: string
         }
@@ -364,6 +403,10 @@ export type Database = {
     }
     Functions: {
       check_subscription_expiry: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      check_trial_expiry: {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }

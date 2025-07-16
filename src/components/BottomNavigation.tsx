@@ -1,5 +1,5 @@
 import { useNavigate, useLocation } from 'react-router-dom';
-import { Home, Plus, User, Search, Heart } from 'lucide-react';
+import { Home, Plus, User, Search, Heart, MessageCircle } from 'lucide-react';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { Button } from '@/components/ui/button';
 
@@ -12,6 +12,7 @@ export const BottomNavigation = () => {
     { icon: Home, label: t('Guriga', 'Home'), path: '/' },
     { icon: Search, label: t('Raadi', 'Search'), path: '/search' },
     { icon: Plus, label: t('Dhig', 'Post'), path: '/post' },
+    { icon: MessageCircle, label: t('Farriimaad', 'Messages'), path: '/messages' },
     { icon: Heart, label: t('Jecel', 'Favorites'), path: '/favorites' },
     { icon: User, label: t('Profile', 'Profile'), path: '/profile' },
   ];
