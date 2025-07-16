@@ -89,7 +89,10 @@ export const AdminPanel = () => {
     try {
       const { data, error } = await supabase
         .from('admin_approvals')
-        .select('*, profiles!admin_approvals_user_id_fkey(email)')
+        .select(`
+          *,
+          profiles(email, shop_name, phone)
+        `)
         .eq('status', 'pending')
         .order('created_at', { ascending: false });
 
@@ -106,7 +109,7 @@ export const AdminPanel = () => {
         .from("payment_approvals")
         .select(`
           *,
-          profiles!payment_approvals_user_id_fkey(shop_name, phone)
+          profiles(email, shop_name, phone)
         `)
         .order("created_at", { ascending: false });
 
