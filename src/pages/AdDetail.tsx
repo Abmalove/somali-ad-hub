@@ -410,17 +410,76 @@ export const AdDetail = () => {
                   const shareUrl = window.location.href;
                   const shareText = `${ad.title} - ${ad.currency} ${ad.price.toLocaleString()}`;
                   
+                  // Create share options
+                  const shareOptions = [
+                    {
+                      name: 'WhatsApp',
+                      url: `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`
+                    },
+                    {
+                      name: 'Facebook',
+                      url: `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`
+                    },
+                    {
+                      name: 'Instagram',
+                      url: `https://www.instagram.com/`
+                    },
+                    {
+                      name: 'TikTok',
+                      url: `https://www.tiktok.com/`
+                    },
+                    {
+                      name: 'Gmail',
+                      url: `mailto:?subject=${encodeURIComponent(ad.title)}&body=${encodeURIComponent(`${shareText} ${shareUrl}`)}`
+                    },
+                    {
+                      name: 'YouTube',
+                      url: `https://www.youtube.com/`
+                    }
+                  ];
+
+                  // Show options or use native share
                   if (navigator.share) {
                     navigator.share({
                       title: ad.title,
                       text: shareText,
                       url: shareUrl,
+                    }).catch(() => {
+                      // Fallback to showing options
+                      showShareOptions(shareOptions);
                     });
                   } else {
-                    navigator.clipboard.writeText(`${shareText} - ${shareUrl}`);
-                    toast({
-                      title: t('Guuleysatay!', 'Success!'),
-                      description: t('Link-ka waa la koobi garay', 'Link copied to clipboard')
+                    showShareOptions(shareOptions);
+                  }
+
+                  function showShareOptions(options: any[]) {
+                    const shareMenu = document.createElement('div');
+                    shareMenu.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
+                    shareMenu.innerHTML = `
+                      <div class="bg-white dark:bg-gray-800 rounded-lg p-4 max-w-sm w-full mx-4">
+                        <h3 class="text-lg font-semibold mb-4 text-center">${t('Wadaag', 'Share')}</h3>
+                        <div class="grid grid-cols-3 gap-3">
+                          ${options.map(option => `
+                            <a href="${option.url}" target="_blank" class="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                              <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold mb-2">
+                                ${option.name[0]}
+                              </div>
+                              <span class="text-xs text-center">${option.name}</span>
+                            </a>
+                          `).join('')}
+                        </div>
+                        <button class="w-full mt-4 py-2 px-4 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors" onclick="this.parentElement.parentElement.remove()">
+                          ${t('Xir', 'Close')}
+                        </button>
+                      </div>
+                    `;
+                    document.body.appendChild(shareMenu);
+                    
+                    // Remove on click outside
+                    shareMenu.addEventListener('click', (e) => {
+                      if (e.target === shareMenu) {
+                        shareMenu.remove();
+                      }
                     });
                   }
                 }}

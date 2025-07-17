@@ -617,7 +617,7 @@ export const PostAd = () => {
               <p><strong>Pay to:</strong> +254757872221</p>
               
               {/* Show Afripesa instructions only for Somalia region users */}
-              {profile?.shop_region === 'Somalia' && (
+              {formData.region === 'Somalia' && (
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
                     {t('Lacag-bixinta EVC/Afripesa', 'EVC/Afripesa Payment Instructions')}

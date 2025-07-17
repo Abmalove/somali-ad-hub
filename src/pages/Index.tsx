@@ -87,8 +87,12 @@ const Index = () => {
   };
 
   const filteredAds = ads.filter(ad => {
-    const matchesSearch = ad.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         ad.description?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = searchTerm === '' || 
+                         ad.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ad.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ad.shop_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ad.brand?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         ad.model?.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesCategory = !selectedCategory || ad.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
