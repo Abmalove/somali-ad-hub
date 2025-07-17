@@ -175,27 +175,93 @@ export const Settings = () => {
           </CardContent>
         </Card>
 
-        <Card className="shadow-medium mb-6">
+        {/* Enhanced Subscription Section */}
+        <Card className="shadow-elegant border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-accent/10 mb-6">
           <CardHeader>
-            <CardTitle>Subscription</CardTitle>
+            <CardTitle className="flex items-center gap-2 text-xl">
+              <Crown className="h-6 w-6 text-primary" />
+              {t('Iska-diiwaangelin', 'Subscription')}
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="p-4 bg-accent rounded-lg">
-              <p className="font-semibold">Current Plan: {profile?.subscription_plan || 'Free'}</p>
-              <p className="text-sm text-muted-foreground">
-                {profile?.subscription_plan === 'free' 
-                  ? 'Upgrade to Pro for unlimited ads and priority support'
-                  : 'You have access to all premium features'
-                }
-              </p>
+          <CardContent className="space-y-6">
+            {/* Current Plan Display */}
+            <div className="relative p-6 bg-background rounded-xl border-2 border-primary/30 shadow-glow">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-3">
+                  {currentPlan === 'pro' && <Crown className="h-6 w-6 text-yellow-500" />}
+                  {currentPlan === 'admin' && <Star className="h-6 w-6 text-purple-500" />}
+                  {currentPlan === 'free' && <div className="h-6 w-6 rounded-full bg-muted" />}
+                  <div>
+                    <h3 className="text-lg font-bold capitalize">{currentPlan} Plan</h3>
+                    <p className="text-sm text-muted-foreground">
+                      {currentPlan === 'free' && t('Bilaw - Bilaash (Iska Kor Qaad)', 'Basic - Free (Limited)')}
+                      {currentPlan === 'pro' && t('Pro - $10/bil - Dhammaan', 'Pro - $10/month - Unlimited')}
+                      {currentPlan === 'admin' && t('Maamule - Dhammaan Xuquuqda', 'Administrator - Full Access')}
+                    </p>
+                  </div>
+                </div>
+                <Badge 
+                  variant={currentPlan === 'free' ? 'outline' : 'default'}
+                  className={`text-sm font-medium ${
+                    currentPlan === 'admin' ? 'bg-purple-500 text-white' : 
+                    currentPlan === 'pro' ? 'bg-primary text-primary-foreground' : ''
+                  }`}
+                >
+                  {currentPlan === 'free' ? t('Bilaash', 'Free') : 
+                   currentPlan === 'pro' ? t('Pro', 'Pro') : 
+                   t('Maamule', 'Admin')}
+                </Badge>
+              </div>
+              
+              {/* Plan Features */}
+              <div className="space-y-2 text-sm">
+                {currentPlan === 'free' && (
+                  <>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="h-1.5 w-1.5 rounded-full bg-yellow-500"></div>
+                      {t('5 xayeysiis oo bilaash ah', 'Up to 5 free ads')}
+                    </div>
+                    <div className="flex items-center gap-2 text-muted-foreground">
+                      <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
+                      {t('Ma laha boost/highlight', 'No boost/highlight options')}
+                    </div>
+                  </>
+                )}
+                {currentPlan === 'pro' && (
+                  <>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                      {t('Xayeysiis aan xadidneyn', 'Unlimited ads')}
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                      {t('Boost iyo highlight', 'Boost and highlight options')}
+                    </div>
+                    <div className="flex items-center gap-2 text-green-600">
+                      <div className="h-1.5 w-1.5 rounded-full bg-green-500"></div>
+                      {t('Taageero degdeg ah', 'Priority support')}
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
+
+            {/* Upgrade Button */}
             {profile?.subscription_plan === 'free' && (
-              <Button 
-                onClick={handleUpgradeToPro}
-                className="w-full"
-              >
-                Upgrade to Pro - $10
-              </Button>
+              <div className="relative">
+                <Button 
+                  onClick={handleUpgradeToPro}
+                  className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-primary to-primary-glow hover:shadow-elegant transition-all duration-300 hover:scale-[1.02]"
+                >
+                  <Crown className="h-5 w-5 mr-2" />
+                  {t('Kor u qaad Pro - $10', 'Upgrade to Pro - $10')}
+                </Button>
+                <div className="absolute -top-2 left-1/2 transform -translate-x-1/2">
+                  <Badge className="bg-yellow-500 text-black font-medium animate-pulse">
+                    {t('Ku Badbaadi 50%!', 'Save 50%!')}
+                  </Badge>
+                </div>
+              </div>
             )}
           </CardContent>
         </Card>

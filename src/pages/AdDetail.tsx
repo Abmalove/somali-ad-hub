@@ -480,32 +480,6 @@ export const AdDetail = () => {
           </Card>
         )}
 
-        {/* Payment Instructions for Somalia */}
-        <Card>
-          <CardHeader>
-            <CardTitle>{t('Lacag-bixinta Soomaalida', 'Payment for Somalis')}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="space-y-4">
-              <h4 className="font-semibold">{t('Pro Plan - $5/bil', 'Pro Plan - $5/month')}</h4>
-              <p className="text-sm text-muted-foreground">
-                {t('MPesa iyada oo loo marayo Afripesa:', 'MPesa via Afripesa:')}
-              </p>
-              <ol className="list-decimal list-inside space-y-2 text-sm">
-                <li>{t('Fur Afripesa app-ka', 'Open Afripesa app')}</li>
-                <li>{t('Dooro "Send Money to Somalia"', 'Choose "Send Money to Somalia"')}</li>
-                <li>{t('Gali lambarka: +252615555555', 'Enter number: +252615555555')}</li>
-                <li>{t('Gali lacagta: $5', 'Enter amount: $5')}</li>
-                <li>{t('Confirmation message-ka soo gudbi', 'Forward confirmation message')}</li>
-              </ol>
-              
-              <h4 className="font-semibold mt-6">{t('Boost/Highlight - $2', 'Boost/Highlight - $2')}</h4>
-              <p className="text-sm text-muted-foreground">
-                {t('Isla sida kor ku xusan, laakiin lacagtu tahay $2', 'Same steps as above, but amount is $2')}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
 
         {/* Ratings */}
         <Card>

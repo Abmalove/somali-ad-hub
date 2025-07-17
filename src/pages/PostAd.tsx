@@ -615,6 +615,25 @@ export const PostAd = () => {
               <p><strong>Amount:</strong> ${paymentAmount}</p>
               <p><strong>Payment Method:</strong> M-Pesa</p>
               <p><strong>Pay to:</strong> +254757872221</p>
+              
+              {/* Show Afripesa instructions only for Somalia region users */}
+              {profile?.shop_region === 'Somalia' && (
+                <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
+                    {t('Lacag-bixinta EVC/Afripesa', 'EVC/Afripesa Payment Instructions')}
+                  </h4>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mb-2">
+                    {t('Fur Chrome ama Safari ka dibna gal Afripesa account-kaaga:', 'Go to Chrome or Safari then login to your Afripesa account:')}
+                  </p>
+                  <ol className="list-decimal list-inside space-y-1 text-xs text-blue-600 dark:text-blue-400">
+                    <li>{t('Gali M-Pesa lambarka: +254757872221', 'Enter M-Pesa number: +254757872221')}</li>
+                    <li>{t(`Dooro lacagta: $${paymentAmount} (${paymentType === 'pro_upgrade' ? 'Pro Plan' : paymentType === 'boost' ? 'Boost' : 'Boost + Highlight'})`, `Select amount: $${paymentAmount} (${paymentType === 'pro_upgrade' ? 'Pro Plan' : paymentType === 'boost' ? 'Boost' : 'Boost + Highlight'})`)}
+                    </li>
+                    <li>{t('Soo dhamaystir lacag-bixinta', 'Complete the payment')}</li>
+                  </ol>
+                </div>
+              )}
+              
               <p className="text-sm text-muted-foreground mt-2">
                 Please send the payment to the number above and confirm below.
               </p>
