@@ -378,6 +378,18 @@ export const Settings = () => {
             </div>
           </DialogContent>
         </Dialog>
+
+        {/* Copyright Section */}
+        <Card className="shadow-medium mt-6">
+          <CardContent className="pt-6">
+            <div className="text-center text-sm text-muted-foreground">
+              <p className="mb-2">© 2024 MarketPlace. All rights reserved.</p>
+              <p className="text-xs">
+                {t('Dhammaan xuquuqda way ka dhigantahay', 'All rights are reserved')}. {t('Isticmaalka app-kan waxa uu ku shuruudaysan yahay shuruudaha adeegga', 'Use of this app is subject to terms of service')}.
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
       <BottomNavigation />

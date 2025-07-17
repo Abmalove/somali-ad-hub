@@ -19,6 +19,17 @@ import { supabase } from '@/integrations/supabase/client';
 import { ArrowLeft, Plus } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Helper function to check if a region is in Somalia
+const isSomaliaRegion = (region: string) => {
+  const somaliaRegions = [
+    'Banaadir', 'Woqooyi Galbeed', 'Bari', 'Nugaal', 'Mudug', 'Galguduud', 
+    'Hiiraan', 'Shabeellaha Dhexe', 'Shabeellaha Hoose', 'Bay', 'Bakool', 
+    'Gedo', 'Jubbada Dhexe', 'Jubbada Hoose', 'Awdal', 'Togdheer', 
+    'Sanaag', 'Sool', 'Maroodi Jeex', 'Sahil'
+  ];
+  return somaliaRegions.includes(region);
+};
+
 export const PostAd = () => {
   const { t } = useLanguage();
   const { user, isLoading } = useAuth();
@@ -616,8 +627,8 @@ export const PostAd = () => {
               <p><strong>Payment Method:</strong> M-Pesa</p>
               <p><strong>Pay to:</strong> +254757872221</p>
               
-              {/* Show Afripesa instructions only for Somalia region users */}
-              {(formData.region === 'Somalia' || pendingAdData?.region === 'Somalia') && (
+              {/* Show Afripesa instructions for users who select any Somalia region */}
+              {(isSomaliaRegion(formData.region) || (pendingAdData?.region && isSomaliaRegion(pendingAdData.region))) && (
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
                     {t('Lacag-bixinta EVC/Afripesa', 'EVC/Afripesa Payment Instructions')}
