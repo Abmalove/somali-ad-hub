@@ -3,12 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useLanguage } from '@/contexts/LanguageContext';
 import { useAuth } from '@/contexts/AuthContext';
 import { LanguageToggle } from '@/components/LanguageToggle';
 import { BottomNavigation } from '@/components/BottomNavigation';
 import { supabase } from '@/integrations/supabase/client';
-import { User, Store, LogOut, Edit, Plus, Eye, Settings, Shield } from 'lucide-react';
+import { User, Store, LogOut, Edit, Plus, Eye, Settings, Shield, Trash2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
 export const Profile = () => {
@@ -20,6 +21,8 @@ export const Profile = () => {
   const [profile, setProfile] = useState<any>(null);
   const [userAds, setUserAds] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [selectedAdId, setSelectedAdId] = useState<string | null>(null);
 
   useEffect(() => {
     if (user) {
@@ -74,6 +77,41 @@ export const Profile = () => {
         variant: 'destructive'
       });
     }
+  };
+
+  const handleDeleteAd = async (adId: string) => {
+    try {
+      const { error } = await supabase
+        .from('ads')
+        .delete()
+        .eq('id', adId)
+        .eq('user_id', user?.id); // Ensure user can only delete their own ads
+
+      if (error) throw error;
+
+      // Update the local state to remove the deleted ad
+      setUserAds(prev => prev.filter(ad => ad.id !== adId));
+      
+      toast({
+        title: t('Guuleysatay!', 'Success!'),
+        description: t('Xayeysiiska waa la tirtiray', 'Ad has been deleted successfully')
+      });
+      
+      setDeleteConfirmOpen(false);
+      setSelectedAdId(null);
+    } catch (error) {
+      console.error('Error deleting ad:', error);
+      toast({
+        title: t('Khalad', 'Error'),
+        description: t('Khalad ayaa dhacay markii la tirayey xayeysiiska', 'An error occurred while deleting the ad'),
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const openDeleteConfirm = (adId: string) => {
+    setSelectedAdId(adId);
+    setDeleteConfirmOpen(true);
   };
 
   const getStatusBadge = (status: string) => {
@@ -284,18 +322,49 @@ export const Profile = () => {
                         </p>
                       </div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      {getStatusBadge(ad.status)}
-                      <Button variant="ghost" size="sm" onClick={() => navigate(`/ad/${ad.id}`)}>
-                        <Eye className="h-4 w-4" />
-                      </Button>
-                    </div>
+                     <div className="flex items-center gap-2">
+                       {getStatusBadge(ad.status)}
+                       <Button variant="ghost" size="sm" onClick={() => navigate(`/ad/${ad.id}`)}>
+                         <Eye className="h-4 w-4" />
+                       </Button>
+                       <Button 
+                         variant="ghost" 
+                         size="sm" 
+                         onClick={() => openDeleteConfirm(ad.id)}
+                         className="text-destructive hover:text-destructive"
+                       >
+                         <Trash2 className="h-4 w-4" />
+                       </Button>
+                     </div>
                   </div>
                 ))}
               </div>
             )}
           </CardContent>
         </Card>
+
+        {/* Delete Confirmation Dialog */}
+        <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>{t('Tirtir Xayeysiiska', 'Delete Ad')}</DialogTitle>
+              <DialogDescription>
+                {t('Ma hubtaa inaad tirtiri doonto xayeysiiskan? Falkan lama soo celin karo.', 'Are you sure you want to delete this ad? This action cannot be undone.')}
+              </DialogDescription>
+            </DialogHeader>
+            <div className="flex gap-2 justify-end">
+              <Button variant="outline" onClick={() => setDeleteConfirmOpen(false)}>
+                {t('Ka Noqo', 'Cancel')}
+              </Button>
+              <Button 
+                variant="destructive" 
+                onClick={() => selectedAdId && handleDeleteAd(selectedAdId)}
+              >
+                {t('Tirtir', 'Delete')}
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
 
       <BottomNavigation />
