@@ -29,6 +29,8 @@ interface Ad {
   shop_name: string;
   phone: string;
   created_at: string;
+  brand?: string;
+  model?: string;
 }
 
 const Index = () => {
