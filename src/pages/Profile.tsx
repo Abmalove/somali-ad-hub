@@ -218,6 +218,20 @@ export const Profile = () => {
           </Button>
         )}
 
+        {/* Payment Info for Somalia Users */}
+        <Card className="shadow-medium bg-blue-50 dark:bg-blue-950/30 border-blue-200 dark:border-blue-800">
+          <CardContent className="pt-4">
+            <div className="text-center text-sm text-blue-700 dark:text-blue-300">
+              <p className="font-medium mb-1">
+                {t('Macluumad Lacag-bixinta', 'Payment Information')}
+              </p>
+              <p className="text-xs">
+                {t('Iibiyayaasha iyo iibsadayaasha Soomaaliya waxa ay lacag M-Pesa ugu diri karaan EVC iyagoo adeegsanaya websiteka Afripesa', 'Sellers/buyers in Somalia can make payment to M-Pesa from EVC through Afripesa website')}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
         {/* Sign Out */}
         <Button variant="destructive" onClick={handleSignOut} className="w-full">
           <LogOut className="h-4 w-4 mr-2" />
