@@ -67,7 +67,7 @@ export const AdDetail = () => {
         .from('comments')
         .select(`
           *,
-          profiles!comments_user_id_fkey(shop_name, email)
+          profiles!inner(shop_name, email)
         `)
         .eq('ad_id', id)
         .order('created_at', { ascending: false });
@@ -76,6 +76,19 @@ export const AdDetail = () => {
       setComments(data || []);
     } catch (error) {
       console.error('Error fetching comments:', error);
+      // Fallback: fetch comments without profile data
+      try {
+        const { data: fallbackData, error: fallbackError } = await supabase
+          .from('comments')
+          .select('*')
+          .eq('ad_id', id)
+          .order('created_at', { ascending: false });
+        
+        if (fallbackError) throw fallbackError;
+        setComments(fallbackData || []);
+      } catch (fallbackError) {
+        console.error('Fallback comment fetch failed:', fallbackError);
+      }
     }
   };
 
@@ -288,20 +301,12 @@ export const AdDetail = () => {
       
       <div className="container mx-auto px-4 py-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <Button variant="ghost" onClick={() => navigate('/')}>
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            {t('Dib u noqo', 'Back')}
-          </Button>
-          <div className="flex gap-2">
-            <Button variant="outline" size="sm" onClick={toggleFavorite}>
-              {isFavorite ? <HeartOff className="h-4 w-4" /> : <Heart className="h-4 w-4" />}
-            </Button>
-            <Button variant="outline" size="sm">
-              <Share2 className="h-4 w-4" />
+          <div className="flex items-center justify-between">
+            <Button variant="ghost" onClick={() => navigate('/')}>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              {t('Dib u noqo', 'Back')}
             </Button>
           </div>
-        </div>
 
         {/* Ad Details */}
         <Card className="shadow-medium">
@@ -392,6 +397,39 @@ export const AdDetail = () => {
               <p className="text-muted-foreground">{ad.description}</p>
             </div>
 
+            {/* Like/Share buttons below description */}
+            <div className="flex justify-center gap-4 mb-6">
+              <Button variant="outline" size="sm" onClick={toggleFavorite}>
+                {isFavorite ? <HeartOff className="h-4 w-4 mr-2" /> : <Heart className="h-4 w-4 mr-2" />}
+                {t('Jecel', 'Like')}
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  const shareUrl = window.location.href;
+                  const shareText = `${ad.title} - ${ad.currency} ${ad.price.toLocaleString()}`;
+                  
+                  if (navigator.share) {
+                    navigator.share({
+                      title: ad.title,
+                      text: shareText,
+                      url: shareUrl,
+                    });
+                  } else {
+                    navigator.clipboard.writeText(`${shareText} - ${shareUrl}`);
+                    toast({
+                      title: t('Guuleysatay!', 'Success!'),
+                      description: t('Link-ka waa la koobi garay', 'Link copied to clipboard')
+                    });
+                  }
+                }}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                {t('Wadaag', 'Share')}
+              </Button>
+            </div>
+
             {/* Actions */}
             <div className="flex gap-4">
               <Button className="flex-1" asChild>
@@ -401,7 +439,17 @@ export const AdDetail = () => {
                 </a>
               </Button>
               {user && user.id !== ad.user_id && (
-                <Button variant="outline" className="flex-1">
+                <Button 
+                  variant="outline" 
+                  className="flex-1"
+                  onClick={() => {
+                    // Scroll to message section
+                    const messageSection = document.getElementById('message-section');
+                    if (messageSection) {
+                      messageSection.scrollIntoView({ behavior: 'smooth' });
+                    }
+                  }}
+                >
                   <MessageCircle className="h-4 w-4 mr-2" />
                   {t('Farriin', 'Message')}
                 </Button>
@@ -412,7 +460,7 @@ export const AdDetail = () => {
 
         {/* Send Message */}
         {user && user.id !== ad.user_id && (
-          <Card>
+          <Card id="message-section">
             <CardHeader>
               <CardTitle>{t('Dir Farriin', 'Send Message')}</CardTitle>
             </CardHeader>
@@ -431,6 +479,33 @@ export const AdDetail = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Payment Instructions for Somalia */}
+        <Card>
+          <CardHeader>
+            <CardTitle>{t('Lacag-bixinta Soomaalida', 'Payment for Somalis')}</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <h4 className="font-semibold">{t('Pro Plan - $5/bil', 'Pro Plan - $5/month')}</h4>
+              <p className="text-sm text-muted-foreground">
+                {t('MPesa iyada oo loo marayo Afripesa:', 'MPesa via Afripesa:')}
+              </p>
+              <ol className="list-decimal list-inside space-y-2 text-sm">
+                <li>{t('Fur Afripesa app-ka', 'Open Afripesa app')}</li>
+                <li>{t('Dooro "Send Money to Somalia"', 'Choose "Send Money to Somalia"')}</li>
+                <li>{t('Gali lambarka: +252615555555', 'Enter number: +252615555555')}</li>
+                <li>{t('Gali lacagta: $5', 'Enter amount: $5')}</li>
+                <li>{t('Confirmation message-ka soo gudbi', 'Forward confirmation message')}</li>
+              </ol>
+              
+              <h4 className="font-semibold mt-6">{t('Boost/Highlight - $2', 'Boost/Highlight - $2')}</h4>
+              <p className="text-sm text-muted-foreground">
+                {t('Isla sida kor ku xusan, laakiin lacagtu tahay $2', 'Same steps as above, but amount is $2')}
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Ratings */}
         <Card>

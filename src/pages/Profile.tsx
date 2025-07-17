@@ -149,6 +149,67 @@ export const Profile = () => {
           </Button>
         </div>
 
+        {/* Subscription Plans */}
+        {profile?.subscription_plan !== 'admin' && (
+          <Card className="shadow-medium">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Plus className="h-5 w-5" />
+                {t('Xulashada Plan-ka', 'Choose Your Plan')}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {profile?.subscription_plan === 'free' ? (
+                  <div className="p-4 bg-gradient-to-r from-yellow-50 to-orange-50 dark:from-yellow-900/20 dark:to-orange-900/20 rounded-lg border border-yellow-200 dark:border-yellow-700">
+                    <div className="flex items-center justify-between mb-3">
+                      <div className="flex items-center gap-2">
+                        <div className="p-2 bg-yellow-100 dark:bg-yellow-800 rounded-full">
+                          <Plus className="h-4 w-4 text-yellow-600 dark:text-yellow-400" />
+                        </div>
+                        <span className="font-semibold">{t('Pro Plan - $5/bil', 'Pro Plan - $5/month')}</span>
+                      </div>
+                    </div>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 bg-yellow-500 rounded-full"></div>
+                        <span>{t('Xayeysiis aan xadidnayn', 'Unlimited ads')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 bg-yellow-500 rounded-full"></div>
+                        <span>{t('Boost & Highlight options', 'Boost & Highlight options')}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <div className="w-1 h-1 bg-yellow-500 rounded-full"></div>
+                        <span>{t('Analytics faahfaahsan', 'Detailed analytics')}</span>
+                      </div>
+                    </div>
+                    <Button 
+                      className="w-full mt-4 bg-gradient-to-r from-yellow-400 to-orange-500 hover:from-yellow-500 hover:to-orange-600" 
+                      onClick={() => navigate('/settings')}
+                    >
+                      <Plus className="h-4 w-4 mr-2" />
+                      {t('Pro-ga u bedel', 'Upgrade to Pro')}
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center p-4 bg-green-50 dark:bg-green-900/20 rounded-lg">
+                    <div className="flex items-center justify-center gap-2 mb-2">
+                      <Plus className="h-5 w-5 text-green-600 dark:text-green-400" />
+                      <span className="font-semibold text-green-700 dark:text-green-300">
+                        {t('Pro Member', 'Pro Member')}
+                      </span>
+                    </div>
+                    <p className="text-sm text-green-600 dark:text-green-400">
+                      {t('Waad ku mahadsantahay in aad Pro member tahay!', 'Thank you for being a Pro member!')}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
         {/* Admin Panel Access */}
         {profile?.subscription_plan === 'admin' && (
           <Button onClick={() => navigate('/admin')} variant="outline" className="w-full">
