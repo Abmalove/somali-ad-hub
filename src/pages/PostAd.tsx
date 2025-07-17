@@ -319,14 +319,41 @@ export const PostAd = () => {
               </Select>
             </div>
             
-            {/* CV Upload for jobs */}
+            {/* Image Upload for jobs (replaced CV with images) */}
+            <ImageUpload 
+              onImagesChange={(urls) => setFormData({ ...formData, image_urls: urls })}
+              maxImages={5}
+              existingImages={formData.image_urls}
+            />
+          </>
+        );
+      
+      case 'services':
+        return (
+          <>
+            <div>
+              <Label htmlFor="experience">{t('Khibradda', 'Experience')}</Label>
+              <Select value={formData.experience} onValueChange={(value) => setFormData({ ...formData, experience: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder={t('Dooro khibradda', 'Select experience')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="entry">{t('Bilow', 'Entry Level')}</SelectItem>
+                  <SelectItem value="1-2">{t('1-2 sano', '1-2 years')}</SelectItem>
+                  <SelectItem value="3-5">{t('3-5 sano', '3-5 years')}</SelectItem>
+                  <SelectItem value="5+">{t('5+ sano', '5+ years')}</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            
+            {/* CV Upload for services */}
             <CVUpload 
               onCVChange={(url) => setFormData({ ...formData, cv_url: url })}
               existingCV={formData.cv_url}
             />
           </>
         );
-      
+
       case 'vehicles':
       case 'phones':
       case 'electronics':
@@ -523,7 +550,7 @@ export const PostAd = () => {
               {formData.category && renderCategoryFields()}
 
               {/* Image Upload */}
-              {formData.category !== 'jobs' && (
+              {formData.category !== 'services' && (
                 <ImageUpload 
                   onImagesChange={(urls) => setFormData({ ...formData, image_urls: urls })}
                   maxImages={5}

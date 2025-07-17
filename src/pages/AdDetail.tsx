@@ -67,7 +67,7 @@ export const AdDetail = () => {
         .from('comments')
         .select(`
           *,
-          profiles!comments_user_id_fkey(shop_name)
+          profiles!comments_user_id_fkey(shop_name, email)
         `)
         .eq('ad_id', id)
         .order('created_at', { ascending: false });
@@ -394,9 +394,11 @@ export const AdDetail = () => {
 
             {/* Actions */}
             <div className="flex gap-4">
-              <Button className="flex-1">
-                <Phone className="h-4 w-4 mr-2" />
-                {t('Wac', 'Call')} {ad.phone}
+              <Button className="flex-1" asChild>
+                <a href={`tel:${ad.phone}`}>
+                  <Phone className="h-4 w-4 mr-2" />
+                  {t('Wac', 'Call')} {ad.phone}
+                </a>
               </Button>
               {user && user.id !== ad.user_id && (
                 <Button variant="outline" className="flex-1">
@@ -514,7 +516,9 @@ export const AdDetail = () => {
               {comments.map((comment) => (
                 <div key={comment.id} className="border-b pb-4">
                   <div className="flex justify-between items-start mb-2">
-                    <span className="font-medium">{comment.profiles?.shop_name || t('Isticmaale', 'User')}</span>
+                    <span className="font-medium">
+                      {comment.profiles?.shop_name || comment.profiles?.email?.split('@')[0] || t('Isticmaale', 'User')}
+                    </span>
                     <span className="text-sm text-muted-foreground">
                       {new Date(comment.created_at).toLocaleDateString()}
                     </span>

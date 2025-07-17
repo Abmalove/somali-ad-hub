@@ -118,7 +118,7 @@ export const AdminPanel = () => {
         .from("payment_approvals")
         .select(`
           *,
-          profiles!inner(email)
+          profiles(email, shop_name)
         `)
         .order("created_at", { ascending: false });
 
@@ -198,6 +198,11 @@ export const AdminPanel = () => {
   };
 
   const handleAdApproval = async (adId: string, action: 'approved' | 'rejected') => {
+    if (!adId) {
+      console.error('No ad ID provided');
+      return;
+    }
+    
     setLoading(true);
     try {
       console.log('Updating ad:', adId, 'to status:', action);

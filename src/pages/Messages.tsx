@@ -103,9 +103,20 @@ export const Messages = () => {
       // Group messages by ad_id and other user
       const conversationMap = new Map<string, Conversation>();
       
+      // First, get all profiles for shop names
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('user_id, shop_name, email');
+
+      const profilesMap = new Map();
+      profilesData?.forEach(profile => {
+        profilesMap.set(profile.user_id, profile);
+      });
+
       data?.forEach((msg: any) => {
         const otherUserId = msg.sender_id === user?.id ? msg.receiver_id : msg.sender_id;
-        const otherUserName = `User ${otherUserId.substring(0, 8)}`;
+        const otherProfile = profilesMap.get(otherUserId);
+        const otherUserName = otherProfile?.shop_name || otherProfile?.email?.split('@')[0] || `User ${otherUserId.substring(0, 8)}`;
         
         const key = `${msg.ad_id}-${otherUserId}`;
         

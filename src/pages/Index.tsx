@@ -137,19 +137,19 @@ const Index = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-20">
+    <div className="min-h-screen pb-20" style={{background: "linear-gradient(180deg, hsl(210 100% 40%), hsl(0 0% 100%))"}}>
       <div className="flex justify-between items-center p-4">
         <LanguageToggle />
         <NotificationSystem />
       </div>
       
       {/* Hero Section */}
-      <div className="bg-gradient-primary text-primary-foreground p-6">
+      <div className="text-white p-6" style={{background: "hsl(210 100% 40%)"}}>
         <div className="container mx-auto">
           <h1 className="text-3xl font-bold mb-2">
             🛒 {t('Suuqa Soomaalida', 'Somali Marketplace')}
           </h1>
-          <p className="text-primary-foreground/80 mb-4">
+          <p className="text-white/80 mb-4">
             {t('Iib, iibso, oo hel wax walba oo aad u baahan tahay', 'Sell, buy, and find everything you need')}
           </p>
           

@@ -39,8 +39,12 @@ All colors MUST be HSL.
 
     --radius: 0.75rem;
 
-    /* Custom tokens */
-    --gradient-primary: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary-glow)));
+    /* Custom tokens - Somali flag colors */
+    --somali-blue: 210 100% 40%;
+    --somali-white: 0 0% 100%;
+    --somali-star: 0 0% 100%;
+    --gradient-primary: linear-gradient(135deg, hsl(var(--somali-blue)), hsl(var(--primary-glow)));
+    --gradient-somali: linear-gradient(180deg, hsl(var(--somali-blue)), hsl(var(--somali-white)));
     --gradient-card: linear-gradient(180deg, hsl(var(--card)), hsl(210 40% 98%));
     --shadow-soft: 0 4px 12px hsl(210 15% 85% / 0.3);
     --shadow-medium: 0 8px 24px hsl(210 15% 85% / 0.4);
