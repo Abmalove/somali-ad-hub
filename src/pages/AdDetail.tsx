@@ -261,6 +261,52 @@ export const AdDetail = () => {
     }
   };
 
+  const updateAdStatus = async (status: string) => {
+    try {
+      const { error } = await supabase
+        .from('ads')
+        .update({ status })
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      // Update local ad state
+      setAd({ ...ad, status });
+    } catch (error) {
+      console.error('Error updating ad status:', error);
+      toast({
+        title: t('Khalad', 'Error'),
+        description: t('Khalad ayaa dhacay', 'Failed to update ad status'),
+        variant: 'destructive'
+      });
+    }
+  };
+
+  const deleteAd = async () => {
+    try {
+      const { error } = await supabase
+        .from('ads')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      
+      toast({
+        title: t('Guuleysatay!', 'Success!'),
+        description: t('Xayeysiiska waa la tirtiray', 'Ad deleted successfully')
+      });
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Error deleting ad:', error);
+      toast({
+        title: t('Khalad', 'Error'),
+        description: t('Khalad ayaa dhacay', 'Failed to delete ad'),
+        variant: 'destructive'
+      });
+    }
+  };
+
   const getCategoryName = (categoryId: string) => {
     const category = categories.find(cat => cat.id === categoryId);
     return category ? t(category.soName, category.enName) : categoryId;
@@ -453,6 +499,30 @@ export const AdDetail = () => {
                   }
 
                   function showShareOptions(options: any[]) {
+                    const getIcon = (name: string) => {
+                      switch(name) {
+                        case 'WhatsApp': return '📱';
+                        case 'Facebook': return '📘';
+                        case 'Instagram': return '📷';
+                        case 'TikTok': return '🎵';
+                        case 'Gmail': return '📧';
+                        case 'YouTube': return '📹';
+                        default: return name[0];
+                      }
+                    };
+                    
+                    const getIconBg = (name: string) => {
+                      switch(name) {
+                        case 'WhatsApp': return 'bg-green-500';
+                        case 'Facebook': return 'bg-blue-600';
+                        case 'Instagram': return 'bg-pink-500';
+                        case 'TikTok': return 'bg-black';
+                        case 'Gmail': return 'bg-red-500';
+                        case 'YouTube': return 'bg-red-600';
+                        default: return 'bg-primary';
+                      }
+                    };
+                    
                     const shareMenu = document.createElement('div');
                     shareMenu.className = 'fixed inset-0 bg-black/50 flex items-center justify-center z-50';
                     shareMenu.innerHTML = `
@@ -460,12 +530,12 @@ export const AdDetail = () => {
                         <h3 class="text-lg font-semibold mb-4 text-center">${t('Wadaag', 'Share')}</h3>
                         <div class="grid grid-cols-3 gap-3">
                           ${options.map(option => `
-                            <a href="${option.url}" target="_blank" class="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                              <div class="w-10 h-10 bg-primary rounded-full flex items-center justify-center text-white text-sm font-bold mb-2">
-                                ${option.name[0]}
-                              </div>
-                              <span class="text-xs text-center">${option.name}</span>
-                            </a>
+                             <a href="${option.url}" target="_blank" class="flex flex-col items-center p-3 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                               <div class="w-10 h-10 rounded-full flex items-center justify-center text-white text-sm font-bold mb-2 ${getIconBg(option.name)}">
+                                 ${getIcon(option.name)}
+                               </div>
+                               <span class="text-xs text-center">${option.name}</span>
+                             </a>
                           `).join('')}
                         </div>
                         <button class="w-full mt-4 py-2 px-4 bg-gray-200 dark:bg-gray-600 rounded-lg hover:bg-gray-300 dark:hover:bg-gray-500 transition-colors" onclick="this.parentElement.parentElement.remove()">
@@ -514,6 +584,52 @@ export const AdDetail = () => {
                 </Button>
               )}
             </div>
+
+            {/* Ad Management - Only for ad owner */}
+            {user && user.id === ad.user_id && (
+              <div className="mt-6 p-4 bg-muted rounded-lg">
+                <h3 className="text-lg font-semibold mb-4">{t('Maamulka Xayeysiiska', 'Ad Management')}</h3>
+                <div className="flex flex-wrap gap-2">
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={async () => {
+                      await updateAdStatus('out_of_stock');
+                      toast({
+                        title: t('Guuleysatay!', 'Success!'),
+                        description: t('Xayeysiiska waxaa lagu calaamadeeyay inuu dhamaday', 'Ad marked as out of stock')
+                      });
+                    }}
+                  >
+                    {t('Calaamadee Alaabta Dhamaaday', 'Mark as Out of Stock')}
+                  </Button>
+                  <Button 
+                    variant="outline" 
+                    size="sm"
+                    onClick={async () => {
+                      await updateAdStatus('approved');
+                      toast({
+                        title: t('Guuleysatay!', 'Success!'),
+                        description: t('Xayeysiiska waxaa lagu calaamadeeyay inuu dib u diyaar yahay', 'Ad marked as restocked')
+                      });
+                    }}
+                  >
+                    {t('Calaamadee Alaabta Dib u Yimaad', 'Mark as Restocked')}
+                  </Button>
+                  <Button 
+                    variant="destructive" 
+                    size="sm"
+                    onClick={async () => {
+                      if (confirm(t('Ma hubtaa inaad tirtirto xayeysiiskan?', 'Are you sure you want to delete this ad?'))) {
+                        await deleteAd();
+                      }
+                    }}
+                  >
+                    {t('Tirtir Xayeysiiska', 'Delete Ad')}
+                  </Button>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 

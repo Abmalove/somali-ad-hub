@@ -136,8 +136,8 @@ export const PostAd = () => {
 
     // Check if boost or highlight options require payment
     if (adOptions.isBoost || adOptions.isHighlight) {
-      const amount = adOptions.isBoost && adOptions.isHighlight ? 15 : (adOptions.isBoost ? 10 : 8);
-      const type = adOptions.isBoost && adOptions.isHighlight ? 'boost_highlight' : 'boost';
+      const amount = adOptions.isHighlight ? 15 : 10; // Boost = $10, Boost + Highlight = $15
+      const type = adOptions.isHighlight ? 'boost_highlight' : 'boost';
       setPaymentType(type);
       setPaymentAmount(amount);
       setShowPaymentDialog(true);
@@ -617,7 +617,7 @@ export const PostAd = () => {
               <p><strong>Pay to:</strong> +254757872221</p>
               
               {/* Show Afripesa instructions only for Somalia region users */}
-              {formData.region === 'Somalia' && (
+              {(formData.region === 'Somalia' || pendingAdData?.region === 'Somalia') && (
                 <div className="mt-4 p-3 bg-blue-50 dark:bg-blue-950/30 rounded-lg border border-blue-200 dark:border-blue-800">
                   <h4 className="font-semibold text-blue-800 dark:text-blue-200 mb-2">
                     {t('Lacag-bixinta EVC/Afripesa', 'EVC/Afripesa Payment Instructions')}
